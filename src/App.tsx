@@ -236,18 +236,6 @@ function App() {
     queryClient.clear()
   }, [queryClient])
 
-  if (!currentUser) {
-    return (
-      <LoginScreen
-        onLogin={async ({ username, password }) => {
-          await loginMutation.mutateAsync({ username, password })
-        }}
-        isSubmitting={loginMutation.isPending}
-        errorMessage={errorMessage}
-      />
-    )
-  }
-
   const handleColumnSearchChange = useCallback((category: NewsCategory, value: string) => {
     setSearchByCategory((previous) => ({
       ...previous,
@@ -261,6 +249,18 @@ function App() {
       [category]: value,
     }))
   }, [])
+
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLogin={async ({ username, password }) => {
+          await loginMutation.mutateAsync({ username, password })
+        }}
+        isSubmitting={loginMutation.isPending}
+        errorMessage={errorMessage}
+      />
+    )
+  }
 
   return (
     <div className="relative h-screen overflow-hidden bg-zinc-950 text-zinc-100">

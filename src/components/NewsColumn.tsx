@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { CATEGORY_ACCENTS, CATEGORY_HEADER_ACCENTS, CATEGORY_LABELS } from '../constants/categories'
-import type { NewsCategory, NewsItem, NewsStatus } from '../types/news'
+import type { NewsCategory, NewsItem } from '../types/news'
 import { EmptyState } from './EmptyState'
 import { LoadingState } from './LoadingState'
 import { NewsCard } from './NewsCard'
@@ -11,10 +11,8 @@ interface NewsColumnProps {
   items: NewsItem[]
   isLoading: boolean
   error?: string
-  onStatusChange: (id: string, status: NewsStatus) => void
-  onSendToN8n: (id: string) => Promise<void>
+  onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
-  updatingItemId?: string
   searchValue: string
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
@@ -23,6 +21,7 @@ interface NewsColumnProps {
   onToggleSelection: (id: string) => void
   onLoadMore?: () => void
   isFetchingNextPage?: boolean
+  canSendToN8n: boolean
 }
 
 export function NewsColumn({
@@ -30,10 +29,8 @@ export function NewsColumn({
   items,
   isLoading,
   error,
-  onStatusChange,
   onSendToN8n,
   sendingToN8nItemId,
-  updatingItemId,
   searchValue,
   onSearchChange,
   onSearchDebounced,
@@ -42,6 +39,7 @@ export function NewsColumn({
   onToggleSelection,
   onLoadMore,
   isFetchingNextPage,
+  canSendToN8n,
 }: NewsColumnProps) {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -100,13 +98,12 @@ export function NewsColumn({
               <NewsCard
                 key={item.id}
                 item={item}
-                onStatusChange={onStatusChange}
                 onSendToN8n={onSendToN8n}
                 onOpenRelated={onOpenRelated}
-                isUpdating={updatingItemId === item.id}
                 isSendingToN8n={sendingToN8nItemId === item.id}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
+                canSendToN8n={canSendToN8n}
               />
             ))
           : null}

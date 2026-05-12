@@ -1,15 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Header } from './components/Header'
 import { NewsBoard } from './components/NewsBoard'
 import { RelatedNewsModal } from './components/news/RelatedNewsModal'
 import { CategoryVisibilityModal } from './components/CategoryVisibilityModal'
 import { GlobalSearchBoard } from './components/GlobalSearchBoard'
+import { LoginScreen } from './components/LoginScreen'
 import { NEWS_CATEGORIES } from './types/news'
-import type { NewsCategory, NewsFilter, NewsItem, NewsStatus } from './types/news'
-import { api, getApiErrorMessage, sendNewsToN8n } from './services/api'
+import type { NewsCategory, NewsFilter, NewsItem } from './types/news'
+import type { AuthUser } from './types/auth'
+import { api, authStorage, getApiErrorMessage } from './services/api'
 
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
+const AUTH_USER_STORAGE_KEY = 'fairwork-user'
 
 const buildCategoryRecord = <T,>(initializer: (category: NewsCategory) => T): Record<NewsCategory, T> => {
   return CATEGORIES.reduce<Record<NewsCategory, T>>((accumulator, category) => {
@@ -18,32 +21,28 @@ const buildCategoryRecord = <T,>(initializer: (category: NewsCategory) => T): Re
   }, {} as Record<NewsCategory, T>)
 }
 
-const filterItems = (items: NewsItem[], filter: NewsFilter): NewsItem[] => {
-  const sorted = [...items].sort((a, b) => {
-    const first = new Date(a.publishedAt).getTime()
-    const second = new Date(b.publishedAt).getTime()
-    return second - first // Orden de más reciente a más antiguo
-  })
+const getStoredUser = (): AuthUser | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
 
-  switch (filter) {
-    case 'score70':
-      return sorted.filter((item) => item.score >= 70)
-    case 'new':
-      return sorted.filter((item) => (item.status ?? 'new') === 'new')
-    case 'selected':
-      return sorted.filter((item) => item.status === 'selected')
-    case 'discarded':
-      return sorted.filter((item) => item.status === 'discarded')
-    case 'all':
-    default:
-      return sorted
+  const rawValue = window.localStorage.getItem(AUTH_USER_STORAGE_KEY)
+
+  if (!rawValue) {
+    return null
+  }
+
+  try {
+    return JSON.parse(rawValue) as AuthUser
+  } catch {
+    return null
   }
 }
 
 function App() {
   const queryClient = useQueryClient()
   const [viewMode, setViewMode] = useState<'monitor' | 'search'>('monitor')
-  const [filter, setFilter] = useState<NewsFilter>('all')
+  const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
   const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(new Set(CATEGORIES))
@@ -55,6 +54,7 @@ function App() {
   const [debouncedSearchByCategory, setDebouncedSearchByCategory] = useState<Record<NewsCategory, string>>(
     buildCategoryRecord(() => ''),
   )
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser())
   const [message, setMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -63,7 +63,21 @@ function App() {
     queryFn: api.getLatestNewsGrouped,
     refetchInterval: 60000,
     staleTime: 30000,
+    enabled: currentUser !== null,
   })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (currentUser) {
+      window.localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(currentUser))
+      return
+    }
+
+    window.localStorage.removeItem(AUTH_USER_STORAGE_KEY)
+  }, [currentUser])
 
   const toggleNewsSelection = useCallback((id: string) => {
     setSelectedNewsIds((prev) => {
@@ -120,35 +134,8 @@ function App() {
     },
   })
 
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: NewsStatus }) =>
-      api.updateNewsStatus(id, { status }),
-    onSuccess: async () => {
-      setErrorMessage(null)
-      setMessage('Estado actualizado correctamente.')
-      await queryClient.invalidateQueries({ queryKey: ['news'] })
-    },
-    onError: (error: unknown) => {
-      setMessage(null)
-      setErrorMessage(getApiErrorMessage(error))
-    },
-  })
-
-  const runScrapeMutation = useMutation({
-    mutationFn: api.triggerScraping,
-    onSuccess: async (result) => {
-      setErrorMessage(null)
-      setMessage(result.message || 'Scraping ejecutado correctamente.')
-      await queryClient.invalidateQueries({ queryKey: ['news'] })
-    },
-    onError: (error: unknown) => {
-      setMessage(null)
-      setErrorMessage(getApiErrorMessage(error))
-    },
-  })
-
   const sendToN8nMutation = useMutation({
-    mutationFn: (id: string) => sendNewsToN8n(id),
+    mutationFn: (id: string) => api.sendNewsToN8n(id),
     onSuccess: (_result, id) => {
       setErrorMessage(null)
       setMessage('Articulo enviado para generar borrador.')
@@ -190,6 +177,10 @@ function App() {
 
   // Auto-scraping cada minuto
   useEffect(() => {
+    if (!currentUser?.isAdmin) {
+      return
+    }
+
     const triggerAutoScraping = async () => {
       try {
         console.log('[Auto-Scraping] Ejecutando scraping automático...')
@@ -215,7 +206,47 @@ function App() {
       clearTimeout(initialTimeout)
       clearInterval(intervalId)
     }
+  }, [currentUser?.isAdmin, queryClient])
+
+  const loginMutation = useMutation({
+    mutationFn: ({ username, password }: { username: string; password: string }) =>
+      api.login(username, password),
+    onSuccess: async (result) => {
+      authStorage.setToken(result.accessToken)
+      setCurrentUser(result.user)
+      setErrorMessage(null)
+      setMessage(null)
+      await queryClient.invalidateQueries({ queryKey: ['news'] })
+    },
+    onError: (error: unknown) => {
+      authStorage.clearToken()
+      setCurrentUser(null)
+      setMessage(null)
+      setErrorMessage(getApiErrorMessage(error))
+    },
+  })
+
+  const handleLogout = useCallback(() => {
+    authStorage.clearToken()
+    setCurrentUser(null)
+    setSelectedNewsIds(new Set())
+    setRelatedNewsTarget(null)
+    setMessage(null)
+    setErrorMessage(null)
+    queryClient.clear()
   }, [queryClient])
+
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLogin={async ({ username, password }) => {
+          await loginMutation.mutateAsync({ username, password })
+        }}
+        isSubmitting={loginMutation.isPending}
+        errorMessage={errorMessage}
+      />
+    )
+  }
 
   const handleColumnSearchChange = useCallback((category: NewsCategory, value: string) => {
     setSearchByCategory((previous) => ({
@@ -248,17 +279,18 @@ function App() {
         onOpenCategories={() => setIsCategoryModalOpen(true)}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {viewMode === 'monitor' ? (
         <NewsBoard
           categories={categoryOrder}
           filter={filter}
-          updatingItemId={updateStatusMutation.isPending ? updateStatusMutation.variables?.id : undefined}
-          onStatusChange={(id, status) => updateStatusMutation.mutate({ id, status })}
           onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
           sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
           searchByCategory={searchByCategory}
+          debouncedSearchByCategory={debouncedSearchByCategory}
           onSearchChange={handleColumnSearchChange}
           onSearchDebounced={handleColumnSearchDebounced}
           onOpenRelated={setRelatedNewsTarget}
@@ -267,17 +299,17 @@ function App() {
           visibleCategories={visibleCategories}
           onReorderCategory={handleReorderCategory}
           topPaddingClass="pt-36 pb-24"
+          canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
         />
       ) : (
         <GlobalSearchBoard
           filter={filter}
-          updatingItemId={updateStatusMutation.isPending ? updateStatusMutation.variables?.id : undefined}
-          onStatusChange={(id, status) => updateStatusMutation.mutate({ id, status })}
           onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
           sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
           onOpenRelated={setRelatedNewsTarget}
           selectedNewsIds={selectedNewsIds}
           onToggleSelection={toggleNewsSelection}
+          canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
         />
       )}
 
@@ -297,14 +329,18 @@ function App() {
             <span className="text-sm font-medium text-cyan-200">
               {selectedNewsIds.size} noticias seleccionadas
             </span>
-            <button
-              type="button"
-              onClick={() => sendMultipleToN8nMutation.mutate(Array.from(selectedNewsIds))}
-              disabled={sendMultipleToN8nMutation.isPending}
-              className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
-            >
-              {sendMultipleToN8nMutation.isPending ? 'Enviando...' : 'Enviar a n8n'}
-            </button>
+            {currentUser.isAdmin || currentUser.canSendToN8n ? (
+              <button
+                type="button"
+                onClick={() => sendMultipleToN8nMutation.mutate(Array.from(selectedNewsIds))}
+                disabled={sendMultipleToN8nMutation.isPending}
+                className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
+              >
+                {sendMultipleToN8nMutation.isPending ? 'Enviando...' : 'Enviar a n8n'}
+              </button>
+            ) : (
+              <span className="text-xs text-zinc-400">Tu usuario no puede enviar a n8n.</span>
+            )}
           </div>
         ) : null}
 

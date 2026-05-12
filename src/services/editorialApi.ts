@@ -1,9 +1,20 @@
 import axios from 'axios'
 import type { EditorialReview, EditorialReviewStatus } from '../types/editorial'
+import { authStorage } from './api'
 
 const editorialClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
   timeout: 15000,
+})
+
+editorialClient.interceptors.request.use((config) => {
+  const token = authStorage.getToken()
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
 })
 
 const normalizeReview = (payload: unknown): EditorialReview => {

@@ -1,6 +1,5 @@
-import { RefreshCw, Radar } from 'lucide-react'
-import { CategoryFilter } from './CategoryFilter'
-import type { NewsFilter } from '../types/news'
+import { LogOut, Radar } from 'lucide-react'
+import type { AuthUser } from '../types/auth'
 
 interface HeaderProps {
   isOnline: boolean
@@ -9,6 +8,8 @@ interface HeaderProps {
   onOpenCategories: () => void
   viewMode: 'monitor' | 'search'
   onViewModeChange: (mode: 'monitor' | 'search') => void
+  currentUser: AuthUser
+  onLogout: () => void
 }
 
 const formatLastUpdate = (value?: Date): string => {
@@ -28,6 +29,8 @@ export function Header({
   onOpenCategories,
   viewMode,
   onViewModeChange,
+  currentUser,
+  onLogout,
 }: HeaderProps) {
   return (
     <header
@@ -52,6 +55,17 @@ export function Header({
           <p className="text-xs text-zinc-400 mt-1">Ultima actualizacion: {formatLastUpdate(lastUpdated)}</p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="mr-2 hidden rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-right sm:block">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Sesión</p>
+            <p className="text-sm font-semibold text-zinc-100">{currentUser.username}</p>
+            <p className="text-xs text-zinc-400">
+              {currentUser.isAdmin
+                ? 'Administrador'
+                : currentUser.canSendToN8n
+                  ? 'Puede enviar a n8n'
+                  : 'Solo lectura'}
+            </p>
+          </div>
           <div className="flex rounded-lg border border-zinc-700 bg-zinc-900 p-1 mr-2">
             <button
               onClick={() => onViewModeChange('monitor')}
@@ -76,6 +90,14 @@ export function Header({
               Columnas
             </button>
           )}
+          <button
+            type="button"
+            onClick={onLogout}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800"
+          >
+            <LogOut size={16} />
+            Salir
+          </button>
         </div>
       </div>
     </header>

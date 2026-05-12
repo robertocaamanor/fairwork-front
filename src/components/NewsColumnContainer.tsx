@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { NewsColumn } from './NewsColumn'
 import { api } from '../services/api'
-import type { NewsCategory, NewsItem, NewsStatus, NewsFilter } from '../types/news'
+import type { NewsCategory, NewsItem, NewsFilter } from '../types/news'
 
 interface NewsColumnContainerProps {
   category: NewsCategory
@@ -11,13 +11,12 @@ interface NewsColumnContainerProps {
   debouncedSearch: string
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
-  updatingItemId?: string
-  onStatusChange: (id: string, status: NewsStatus) => void
-  onSendToN8n: (id: string) => Promise<void>
+  onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
   onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
+  canSendToN8n: boolean
 }
 
 export function NewsColumnContainer({
@@ -27,13 +26,12 @@ export function NewsColumnContainer({
   debouncedSearch,
   onSearchChange,
   onSearchDebounced,
-  updatingItemId,
-  onStatusChange,
   onSendToN8n,
   sendingToN8nItemId,
   onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
+  canSendToN8n,
 }: NewsColumnContainerProps) {
   const {
     data,
@@ -74,8 +72,6 @@ export function NewsColumnContainer({
       isLoading={isLoading}
       isFetchingNextPage={isFetchingNextPage}
       error={errorMessage}
-      updatingItemId={updatingItemId}
-      onStatusChange={onStatusChange}
       onSendToN8n={onSendToN8n}
       sendingToN8nItemId={sendingToN8nItemId}
       searchValue={searchValue}
@@ -84,6 +80,7 @@ export function NewsColumnContainer({
       onOpenRelated={onOpenRelated}
       selectedNewsIds={selectedNewsIds}
       onToggleSelection={onToggleSelection}
+      canSendToN8n={canSendToN8n}
       onLoadMore={() => {
         if (hasNextPage && !isFetchingNextPage) {
           fetchNextPage()

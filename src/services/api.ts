@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import type { LoginResponse, AuthUser } from '../types/auth'
 import type {
   NewsCategory,
   NewsItem,
@@ -10,6 +11,24 @@ import { NEWS_CATEGORIES } from '../types/news'
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
   timeout: 15000,
+})
+
+const getStoredToken = (): string | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  return window.localStorage.getItem('fairwork-token')
+}
+
+apiClient.interceptors.request.use((config) => {
+  const token = getStoredToken()
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
 })
 
 interface RawNewsItem {
@@ -184,7 +203,33 @@ export const sendNewsToN8n = (id: string | number) => {
   return apiClient.post(`/news/${id}/send-to-n8n`)
 }
 
+export const authStorage = {
+  getToken(): string | null {
+    return getStoredToken()
+  },
+  setToken(token: string) {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('fairwork-token', token)
+    }
+  },
+  clearToken() {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('fairwork-token')
+    }
+  },
+}
+
 export const api = {
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const response = await apiClient.post('/auth/login', { username, password })
+    return response.data as LoginResponse
+  },
+
+  async getCurrentUser(): Promise<AuthUser> {
+    const response = await apiClient.get('/auth/me')
+    return response.data as AuthUser
+  },
+
   async getLatestNewsGrouped(): Promise<Record<NewsCategory, NewsItem[]>> {
     const response = await apiClient.get('/news/latest')
     return normalizeLatestGrouped(response.data)

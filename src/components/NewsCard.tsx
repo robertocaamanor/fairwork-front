@@ -1,15 +1,14 @@
-import { Check, ExternalLink, Link2, Send, X } from 'lucide-react'
-import type { NewsItem, NewsStatus } from '../types/news'
+import { ExternalLink, Link2, Send } from 'lucide-react'
+import type { NewsItem } from '../types/news'
 
 interface NewsCardProps {
   item: NewsItem
-  onStatusChange: (id: string, status: NewsStatus) => void
-  onSendToN8n: (id: string) => Promise<void>
+  onSendToN8n: (id: string) => Promise<unknown>
   onOpenRelated: (item: NewsItem) => void
-  isUpdating: boolean
   isSendingToN8n: boolean
   isSelected: boolean
   onToggleSelect: () => void
+  canSendToN8n: boolean
 }
 
 const statusStyles: Record<string, string> = {
@@ -42,13 +41,12 @@ const formatDate = (value: string): string => {
 
 export function NewsCard({
   item,
-  onStatusChange,
   onSendToN8n,
   onOpenRelated,
-  isUpdating,
   isSendingToN8n,
   isSelected,
   onToggleSelect,
+  canSendToN8n,
 }: NewsCardProps) {
   const currentStatus = item.status ?? 'new'
 
@@ -96,11 +94,15 @@ export function NewsCard({
         <button
           type="button"
           onClick={handleGenerate}
-          disabled={isSendingToN8n}
+          disabled={isSendingToN8n || !canSendToN8n}
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Send size={15} className={isSendingToN8n ? 'animate-pulse' : ''} />
-          {isSendingToN8n ? 'Generando...' : 'Generar articulo'}
+          {!canSendToN8n
+            ? 'Sin permiso para n8n'
+            : isSendingToN8n
+              ? 'Generando...'
+              : 'Generar articulo'}
         </button>
       </div>
 

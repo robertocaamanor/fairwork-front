@@ -5,28 +5,26 @@ import { api } from '../services/api'
 import { NewsCard } from './NewsCard'
 import { LoadingState } from './LoadingState'
 import { EmptyState } from './EmptyState'
-import type { NewsFilter, NewsItem, NewsStatus } from '../types/news'
+import type { NewsFilter, NewsItem } from '../types/news'
 
 interface GlobalSearchBoardProps {
   filter: NewsFilter
-  updatingItemId?: string
-  onStatusChange: (id: string, status: NewsStatus) => void
-  onSendToN8n: (id: string) => Promise<void>
+  onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
   onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
+  canSendToN8n: boolean
 }
 
 export function GlobalSearchBoard({
   filter,
-  updatingItemId,
-  onStatusChange,
   onSendToN8n,
   sendingToN8nItemId,
   onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
+  canSendToN8n,
 }: GlobalSearchBoardProps) {
   const [query, setQuery] = useState('')
   const [source, setSource] = useState('')
@@ -139,13 +137,12 @@ export function GlobalSearchBoard({
               <NewsCard
                 key={item.id}
                 item={item}
-                onStatusChange={onStatusChange}
                 onSendToN8n={onSendToN8n}
                 onOpenRelated={onOpenRelated}
-                isUpdating={updatingItemId === item.id}
                 isSendingToN8n={sendingToN8nItemId === item.id}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
+                canSendToN8n={canSendToN8n}
               />
             ))}
           </div>

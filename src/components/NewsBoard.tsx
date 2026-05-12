@@ -1,15 +1,14 @@
 import { useRef, useState } from 'react'
 import { CATEGORY_LABELS } from '../constants/categories'
-import type { NewsCategory, NewsItem, NewsStatus, NewsFilter } from '../types/news'
+import type { NewsCategory, NewsItem, NewsFilter } from '../types/news'
 import { NewsColumnContainer } from './NewsColumnContainer'
 
 interface NewsBoardProps {
   categories: NewsCategory[]
-  updatingItemId?: string
-  onStatusChange: (id: string, status: NewsStatus) => void
-  onSendToN8n: (id: string) => Promise<void>
+  onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
   searchByCategory: Record<NewsCategory, string>
+  debouncedSearchByCategory: Record<NewsCategory, string>
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
   onOpenRelated: (item: NewsItem) => void
@@ -19,15 +18,15 @@ interface NewsBoardProps {
   onReorderCategory: (source: NewsCategory, target: NewsCategory) => void
   topPaddingClass?: string
   filter: NewsFilter
+  canSendToN8n: boolean
 }
 
 export function NewsBoard({
   categories,
-  updatingItemId,
-  onStatusChange,
   onSendToN8n,
   sendingToN8nItemId,
   searchByCategory,
+  debouncedSearchByCategory,
   onSearchChange,
   onSearchDebounced,
   onOpenRelated,
@@ -37,6 +36,7 @@ export function NewsBoard({
   onReorderCategory,
   topPaddingClass = 'pt-24',
   filter,
+  canSendToN8n,
 }: NewsBoardProps) {
   const visibleCategoryList = categories.filter(c => visibleCategories.has(c))
   
@@ -107,9 +107,7 @@ export function NewsBoard({
               category={category}
               filter={filter}
               searchValue={searchByCategory[category]}
-              debouncedSearch={searchByCategory[category]}
-              updatingItemId={updatingItemId}
-              onStatusChange={onStatusChange}
+              debouncedSearch={debouncedSearchByCategory[category]}
               onSendToN8n={onSendToN8n}
               sendingToN8nItemId={sendingToN8nItemId}
               onSearchChange={onSearchChange}
@@ -117,6 +115,7 @@ export function NewsBoard({
               onOpenRelated={onOpenRelated}
               selectedNewsIds={selectedNewsIds}
               onToggleSelection={onToggleSelection}
+              canSendToN8n={canSendToN8n}
             />
           </div>
         ))}

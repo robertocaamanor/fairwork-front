@@ -69,3 +69,13 @@ export interface EditorialTopicProposal {
   createdAt: string
   updatedAt: string
 }
+
+export interface EditorialTopic {
+  id: string
+  theme: string
+  category: string
+  tone: string
+  proposalCount: number
+  createdAt?: string
+  updatedAt?: string
+}

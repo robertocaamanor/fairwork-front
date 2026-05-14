@@ -2,6 +2,7 @@ import axios from 'axios'
 import type {
   EditorialReview,
   EditorialReviewStatus,
+  EditorialTopic,
   EditorialTopicProposal,
   EditorialTopicProposalStatus,
   EditorialTopicSource,
@@ -91,6 +92,20 @@ const normalizeTopicProposal = (payload: unknown): EditorialTopicProposal => {
   }
 }
 
+const normalizeTopic = (payload: unknown): EditorialTopic => {
+  const item = (payload ?? {}) as Partial<EditorialTopic>
+
+  return {
+    id: String(item.id ?? ''),
+    theme: String(item.theme ?? 'Tema sin titulo'),
+    category: String(item.category ?? 'sin_categoria'),
+    tone: String(item.tone ?? 'informativo'),
+    proposalCount: Number(item.proposalCount ?? 0),
+    createdAt: item.createdAt ? String(item.createdAt) : undefined,
+    updatedAt: item.updatedAt ? String(item.updatedAt) : undefined,
+  }
+}
+
 export const getEditorialReviews = async (
   status: EditorialReviewStatus,
 ): Promise<EditorialReview[]> => {
@@ -139,4 +154,16 @@ export const getTopicProposals = async (topicId: string): Promise<EditorialTopic
   }
 
   return response.data.map((item: unknown) => normalizeTopicProposal(item))
+}
+
+export const getEditorialTopics = async (query?: string): Promise<EditorialTopic[]> => {
+  const response = await editorialClient.get('/editorial/topics', {
+    params: query?.trim() ? { q: query.trim() } : undefined,
+  })
+
+  if (!Array.isArray(response.data)) {
+    return []
+  }
+
+  return response.data.map((item: unknown) => normalizeTopic(item))
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Search } from 'lucide-react'
+import { RefreshCw, Search } from 'lucide-react'
 import type { EditorialReview, EditorialReviewStatus } from '../../types/editorial'
 import { getApiErrorMessage } from '../../services/api'
 import {
   approveEditorialReview,
+  getEditorialTopics,
   getEditorialReviews,
   getTopicProposals,
   rejectEditorialReview,
@@ -18,15 +19,13 @@ import { TopicProposalCard } from './TopicProposalCard'
 
 type EditorialSection = 'reviews' | 'topics'
 
-const normalizeTopicId = (value: string): string => value.trim()
-
 export function EditorialWorkspace() {
   const queryClient = useQueryClient()
   const [section, setSection] = useState<EditorialSection>('reviews')
   const [status, setStatus] = useState<EditorialReviewStatus>('pending_review')
   const [selectedReview, setSelectedReview] = useState<EditorialReview | null>(null)
   const [rejectingReview, setRejectingReview] = useState<EditorialReview | null>(null)
-  const [topicInput, setTopicInput] = useState('')
+  const [topicSearch, setTopicSearch] = useState('')
   const [topicId, setTopicId] = useState('')
 
   const reviewsQuery = useQuery({
@@ -35,10 +34,20 @@ export function EditorialWorkspace() {
     enabled: section === 'reviews',
   })
 
+  const topicsQuery = useQuery({
+    queryKey: ['editorial', 'topics', topicSearch.trim()],
+    queryFn: () => getEditorialTopics(topicSearch),
+    refetchInterval: section === 'topics' ? 30000 : false,
+    enabled: section === 'topics',
+  })
+  const firstTopic = topicsQuery.data?.find((topic) => topic.proposalCount > 0) ?? topicsQuery.data?.[0]
+  const selectedTopicFromResults = topicsQuery.data?.find((topic) => topic.id === topicId)
+  const activeTopicId = selectedTopicFromResults?.id || firstTopic?.id || ''
+
   const topicProposalsQuery = useQuery({
-    queryKey: ['editorial', 'topics', topicId, 'proposals'],
-    queryFn: () => getTopicProposals(topicId),
-    enabled: section === 'topics' && topicId.length > 0,
+    queryKey: ['editorial', 'topics', activeTopicId, 'proposals'],
+    queryFn: () => getTopicProposals(activeTopicId),
+    enabled: section === 'topics' && activeTopicId.length > 0,
   })
 
   const approveMutation = useMutation({
@@ -59,9 +68,11 @@ export function EditorialWorkspace() {
 
   const reviewError = reviewsQuery.error ? getApiErrorMessage(reviewsQuery.error) : undefined
   const topicError = topicProposalsQuery.error ? getApiErrorMessage(topicProposalsQuery.error) : undefined
+  const topicsError = topicsQuery.error ? getApiErrorMessage(topicsQuery.error) : undefined
   const mutationError = approveMutation.error ?? rejectMutation.error
   const reviewMutationError = mutationError ? getApiErrorMessage(mutationError) : undefined
   const isSubmitting = approveMutation.isPending || rejectMutation.isPending
+  const selectedTopic = topicsQuery.data?.find((topic) => topic.id === activeTopicId)
 
   return (
     <main className="h-full overflow-y-auto px-4 pb-6 pt-36 sm:px-6">
@@ -99,13 +110,16 @@ export function EditorialWorkspace() {
               className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-xl"
               onSubmit={(event) => {
                 event.preventDefault()
-                setTopicId(normalizeTopicId(topicInput))
+                topicsQuery.refetch()
               }}
             >
               <input
-                value={topicInput}
-                onChange={(event) => setTopicInput(event.target.value)}
-                placeholder="topicId"
+                value={topicSearch}
+                onChange={(event) => {
+                  setTopicSearch(event.target.value)
+                  setTopicId('')
+                }}
+                placeholder="Buscar temática por título"
                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-cyan-400/40 focus:ring"
               />
               <button
@@ -115,6 +129,15 @@ export function EditorialWorkspace() {
                 title="Buscar propuestas"
               >
                 <Search size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => topicsQuery.refetch()}
+                className="inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800"
+                aria-label="Actualizar temáticas"
+                title="Actualizar temáticas"
+              >
+                <RefreshCw size={16} />
               </button>
             </form>
           )}
@@ -132,29 +155,99 @@ export function EditorialWorkspace() {
             topPaddingClass="pt-0"
           />
         ) : (
-          <section className="grid gap-4">
-            {topicId.length === 0 ? (
-              <EmptyState message="Ingresa un topicId para ver propuestas." />
-            ) : topicProposalsQuery.isLoading ? (
-              <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 text-sm text-zinc-300">
-                Cargando propuestas editoriales...
+          <section className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+            <aside className="rounded-lg border border-zinc-700 bg-zinc-900 p-3">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-zinc-100">Temáticas</h2>
+                <span className="text-xs text-zinc-500">{topicsQuery.data?.length ?? 0}</span>
               </div>
-            ) : topicError ? (
-              <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
-                {topicError}
-              </div>
-            ) : (topicProposalsQuery.data ?? []).length === 0 ? (
-              <EmptyState message="No hay propuestas para este topicId." />
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-2">
-                {(topicProposalsQuery.data ?? []).map((proposal) => (
-                  <TopicProposalCard key={proposal.id} proposal={proposal} />
-                ))}
-              </div>
-            )}
+
+              {topicsQuery.isLoading ? (
+                <p className="text-sm text-zinc-400">Cargando temáticas...</p>
+              ) : topicsError ? (
+                <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-200">
+                  {topicsError}
+                </div>
+              ) : (topicsQuery.data ?? []).length === 0 ? (
+                <p className="text-sm text-zinc-400">
+                  {topicSearch.trim()
+                    ? 'No hay temáticas con ese título.'
+                    : 'No hay temáticas guardadas.'}
+                </p>
+              ) : (
+                <div className="grid gap-2">
+                  {(topicsQuery.data ?? []).map((topic) => {
+                    const isSelected = topic.id === activeTopicId
+
+                    return (
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => {
+                          setTopicId(topic.id)
+                        }}
+                        className={`rounded-lg border p-3 text-left transition ${
+                          isSelected
+                            ? 'border-cyan-400/40 bg-cyan-400/10'
+                            : 'border-zinc-700 bg-zinc-950/60 hover:bg-zinc-800'
+                        }`}
+                      >
+                        <p className="line-clamp-2 text-sm font-medium text-zinc-100">{topic.theme}</p>
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          <span className="rounded-md border border-zinc-700 px-2 py-1 text-zinc-300">
+                            {topic.category}
+                          </span>
+                          <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-cyan-200">
+                            {topic.proposalCount} propuestas
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </aside>
+
+            <div className="grid gap-4">
+              {selectedTopic ? (
+                <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4">
+                  <p className="text-xs font-medium uppercase text-zinc-500">Tema seleccionado</p>
+                  <h2 className="mt-1 text-lg font-semibold text-zinc-100">{selectedTopic.theme}</h2>
+                  <p className="mt-1 text-sm text-zinc-400">
+                    {selectedTopic.category} · {selectedTopic.tone}
+                  </p>
+                </div>
+              ) : null}
+
+              {activeTopicId.length === 0 ? (
+                <EmptyState message="Selecciona una temática para ver propuestas." />
+              ) : topicProposalsQuery.isLoading ? (
+                <div className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 text-sm text-zinc-300">
+                  Cargando propuestas editoriales...
+                </div>
+              ) : topicError ? (
+                <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
+                  {topicError}
+                </div>
+              ) : (topicProposalsQuery.data ?? []).length === 0 ? (
+                <EmptyState message="No hay propuestas para esta temática." />
+              ) : (
+                <div className="grid gap-4 xl:grid-cols-2">
+                  {(topicProposalsQuery.data ?? []).map((proposal) => (
+                    <TopicProposalCard key={proposal.id} proposal={proposal} />
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         )}
       </div>
+
+      {section === 'reviews' && !reviewsQuery.isLoading && (reviewsQuery.data ?? []).length === 0 ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-20 max-w-sm rounded-lg border border-cyan-500/30 bg-zinc-900/95 p-3 text-sm text-zinc-300 shadow-xl">
+          Las propuestas generadas por IA aparecen en la pestaña <span className="text-cyan-200">Propuestas</span>.
+        </div>
+      ) : null}
 
       <EditorialContentModal review={selectedReview} onClose={() => setSelectedReview(null)} />
       <RejectReviewModal

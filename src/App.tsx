@@ -134,13 +134,15 @@ function App() {
 
   const sendMultipleToN8nMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      for (const id of ids) {
-        await api.sendNewsToN8n(id)
-      }
+      return api.generateTopicProposals({
+        newsIds: ids,
+        tone: 'informativo',
+        requestedProposals: 5,
+      })
     },
     onSuccess: () => {
       setErrorMessage(null)
-      setMessage(`${selectedNewsIds.size} articulos enviados al n8n.`)
+      setMessage(`${selectedNewsIds.size} articulos enviados a n8n en un solo lote.`)
       setSelectedNewsIds(new Set())
       queryClient.invalidateQueries({ queryKey: ['news'] })
     },

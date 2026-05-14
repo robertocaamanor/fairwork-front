@@ -310,6 +310,15 @@ export const api = {
     return response.data as { success: boolean; message: string; newsId: string }
   },
 
+  async generateTopicProposals(payload: {
+    newsIds: string[]
+    tone?: string
+    requestedProposals?: number
+  }): Promise<unknown> {
+    const response = await apiClient.post('/editorial/topics/generate-proposals', payload)
+    return response.data
+  },
+
   async triggerScraping(): Promise<{ message: string }> {
     const response = await apiClient.post('/news/scrape')
 

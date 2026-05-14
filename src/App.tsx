@@ -6,6 +6,7 @@ import { RelatedNewsModal } from './components/news/RelatedNewsModal'
 import { CategoryVisibilityModal } from './components/CategoryVisibilityModal'
 import { GlobalSearchBoard } from './components/GlobalSearchBoard'
 import { LoginScreen } from './components/LoginScreen'
+import { EditorialWorkspace } from './components/editorial/EditorialWorkspace'
 import { NEWS_CATEGORIES } from './types/news'
 import type { NewsCategory, NewsFilter, NewsItem } from './types/news'
 import type { AuthUser } from './types/auth'
@@ -13,6 +14,7 @@ import { api, authStorage, getApiErrorMessage } from './services/api'
 
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
 const AUTH_USER_STORAGE_KEY = 'fairwork-user'
+type ViewMode = 'monitor' | 'search' | 'editorial'
 
 const buildCategoryRecord = <T,>(initializer: (category: NewsCategory) => T): Record<NewsCategory, T> => {
   return CATEGORIES.reduce<Record<NewsCategory, T>>((accumulator, category) => {
@@ -41,7 +43,7 @@ const getStoredUser = (): AuthUser | null => {
 
 function App() {
   const queryClient = useQueryClient()
-  const [viewMode, setViewMode] = useState<'monitor' | 'search'>('monitor')
+  const [viewMode, setViewMode] = useState<ViewMode>('monitor')
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
@@ -301,7 +303,7 @@ function App() {
           topPaddingClass="pt-36 pb-24"
           canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
         />
-      ) : (
+      ) : viewMode === 'search' ? (
         <GlobalSearchBoard
           filter={filter}
           onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
@@ -311,6 +313,8 @@ function App() {
           onToggleSelection={toggleNewsSelection}
           canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
         />
+      ) : (
+        <EditorialWorkspace />
       )}
 
       {isCategoryModalOpen ? (

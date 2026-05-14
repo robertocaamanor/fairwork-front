@@ -26,32 +26,32 @@ export function EditorialBoard({
 }: EditorialBoardProps) {
   if (isLoading) {
     return (
-      <main className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
+      <section className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
         <LoadingState message="Cargando revisiones editoriales..." />
-      </main>
+      </section>
     )
   }
 
   if (error) {
     return (
-      <main className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
+      <section className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
         <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200">
           {error}
         </div>
-      </main>
+      </section>
     )
   }
 
   if (reviews.length === 0) {
     return (
-      <main className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
+      <section className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
         <EmptyState message="No hay revisiones para este filtro." />
-      </main>
+      </section>
     )
   }
 
   return (
-    <main className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
+    <section className={`h-full overflow-y-auto px-4 pb-4 ${topPaddingClass} sm:px-6`}>
       <div className="mx-auto grid max-w-[1100px] gap-4">
         {reviews.map((review) => (
           <EditorialReviewCard
@@ -64,6 +64,6 @@ export function EditorialBoard({
           />
         ))}
       </div>
-    </main>
+    </section>
   )
 }

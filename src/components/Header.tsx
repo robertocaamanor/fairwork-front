@@ -6,8 +6,8 @@ interface HeaderProps {
   lastUpdated?: Date
   className?: string
   onOpenCategories: () => void
-  viewMode: 'monitor' | 'search'
-  onViewModeChange: (mode: 'monitor' | 'search') => void
+  viewMode: 'monitor' | 'search' | 'editorial'
+  onViewModeChange: (mode: 'monitor' | 'search' | 'editorial') => void
   currentUser: AuthUser
   onLogout: () => void
 }
@@ -78,6 +78,12 @@ export function Header({
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${viewMode === 'search' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
             >
               Búsqueda
+            </button>
+            <button
+              onClick={() => onViewModeChange('editorial')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${viewMode === 'editorial' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-zinc-300'}`}
+            >
+              Editorial
             </button>
           </div>
           {viewMode === 'monitor' && (

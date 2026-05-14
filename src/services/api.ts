@@ -315,12 +315,16 @@ export const api = {
     tone?: string
     requestedProposals?: number
   }): Promise<unknown> {
-    const response = await apiClient.post('/editorial/topics/generate-proposals', payload)
+    const response = await apiClient.post('/editorial/topics/generate-proposals', payload, {
+      timeout: 180000,
+    })
     return response.data
   },
 
   async triggerScraping(): Promise<{ message: string }> {
-    const response = await apiClient.post('/news/scrape')
+    const response = await apiClient.post('/news/scrape', undefined, {
+      timeout: 120000,
+    })
 
     if (response.data && typeof response.data === 'object' && 'message' in response.data) {
       return response.data as { message: string }

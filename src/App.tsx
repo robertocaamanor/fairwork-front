@@ -15,6 +15,11 @@ import { api, authStorage, getApiErrorMessage } from './services/api'
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
 const AUTH_USER_STORAGE_KEY = 'fairwork-user'
 type ViewMode = 'monitor' | 'search' | 'editorial'
+const VIEW_MODE_TITLES: Record<ViewMode, string> = {
+  monitor: 'Monitor',
+  search: 'Busqueda',
+  editorial: 'Editorial',
+}
 
 const buildCategoryRecord = <T,>(initializer: (category: NewsCategory) => T): Record<NewsCategory, T> => {
   return CATEGORIES.reduce<Record<NewsCategory, T>>((accumulator, category) => {
@@ -80,6 +85,15 @@ function App() {
 
     window.localStorage.removeItem(AUTH_USER_STORAGE_KEY)
   }, [currentUser])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    const windowName = currentUser ? VIEW_MODE_TITLES[viewMode] : 'Acceso'
+    document.title = `Fairwork | ${windowName}`
+  }, [currentUser, viewMode])
 
   const toggleNewsSelection = useCallback((id: string) => {
     setSelectedNewsIds((prev) => {

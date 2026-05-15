@@ -11,6 +11,7 @@ import { NEWS_CATEGORIES } from './types/news'
 import type { NewsCategory, NewsFilter, NewsItem } from './types/news'
 import type { AuthUser } from './types/auth'
 import { api, authStorage, getApiErrorMessage } from './services/api'
+import { DEFAULT_VISIBLE_CATEGORIES } from './constants/categories'
 
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
 const AUTH_USER_STORAGE_KEY = 'fairwork-user'
@@ -52,7 +53,7 @@ function App() {
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
-  const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(new Set(CATEGORIES))
+  const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(DEFAULT_VISIBLE_CATEGORIES)
   const [categoryOrder, setCategoryOrder] = useState<NewsCategory[]>(CATEGORIES)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [searchByCategory, setSearchByCategory] = useState<Record<NewsCategory, string>>(

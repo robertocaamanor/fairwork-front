@@ -1,10 +1,19 @@
 export const NEWS_CATEGORIES = [
   'tv_chilena',
-  'tv_internacional',
   'musica',
   'tecnologia',
   'streaming',
+  'tv_argentina',
+  'tv_mexicana',
+  'tv_espanola',
+  'tv_italiana',
+  'tv_usa',
+  'cine',
+  'sanremo',
+  'eurovision',
   'fiebre_de_baile',
+  'el_internado_mega',
+  'vecinos_al_limite',
 ] as const
 
 export type NewsCategory = (typeof NEWS_CATEGORIES)[number]

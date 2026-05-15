@@ -1,14 +1,10 @@
-import { ExternalLink, Link2, Send } from 'lucide-react'
+import { ExternalLink, Link2 } from 'lucide-react'
 import type { NewsItem } from '../types/news'
 
 interface NewsCardProps {
   item: NewsItem
-  onSendToN8n: (id: string) => Promise<unknown>
-  onOpenRelated: (item: NewsItem) => void
-  isSendingToN8n: boolean
   isSelected: boolean
   onToggleSelect: () => void
-  canSendToN8n: boolean
 }
 
 const statusStyles: Record<string, string> = {
@@ -41,20 +37,10 @@ const formatDate = (value: string): string => {
 
 export function NewsCard({
   item,
-  onSendToN8n,
-  onOpenRelated,
-  isSendingToN8n,
   isSelected,
   onToggleSelect,
-  canSendToN8n,
 }: NewsCardProps) {
   const currentStatus = item.status ?? 'new'
-
-  const handleGenerate = async () => {
-    console.log('CLICK:', item.id, item.title)
-    console.log('ENVIANDO:', item.id, item.title)
-    await onSendToN8n(item.id)
-  }
 
   return (
     <article className={`relative rounded-xl border bg-zinc-800 p-4 shadow-lg shadow-black/20 transition-colors ${isSelected ? 'border-cyan-500 bg-cyan-500/10' : 'border-zinc-700'}`}>
@@ -90,31 +76,16 @@ export function NewsCard({
         </span>
       </div>
 
-      <div className="mb-2">
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={isSendingToN8n || !canSendToN8n}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <Send size={15} className={isSendingToN8n ? 'animate-pulse' : ''} />
-          {!canSendToN8n
-            ? 'Sin permiso para n8n'
-            : isSendingToN8n
-              ? 'Generando...'
-              : 'Generar articulo'}
-        </button>
-      </div>
-
       <div className="grid grid-cols-2 gap-2">
 
-        <button
-          type="button"
-          onClick={() => onOpenRelated(item)}
+        <a
+          href={`https://news.google.com/search?q=${encodeURIComponent(item.title)}`}
+          target="_blank"
+          rel="noreferrer"
           className="inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-600 bg-zinc-700/60 px-2 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700"
         >
           <Link2 size={14} /> Relacionadas
-        </button>
+        </a>
 
         <a
           href={item.originalUrl}

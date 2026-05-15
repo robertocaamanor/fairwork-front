@@ -98,12 +98,8 @@ export function NewsColumn({
               <NewsCard
                 key={item.id}
                 item={item}
-                onSendToN8n={onSendToN8n}
-                onOpenRelated={onOpenRelated}
-                isSendingToN8n={sendingToN8nItemId === item.id}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
-                canSendToN8n={canSendToN8n}
               />
             ))
           : null}

@@ -125,6 +125,43 @@ const isGoogleIntermediateUrl = (url?: string): boolean => {
   )
 }
 
+const normalizeResolvedDomain = (value?: string): string | undefined => {
+  const normalized = value?.trim().toLowerCase()
+  if (!normalized) {
+    return undefined
+  }
+
+  return normalized.replace(/^(www\.|m\.)/, '')
+}
+
+const getDomainFromUrl = (value?: string): string | undefined => {
+  const normalized = value?.trim()
+  if (!normalized) {
+    return undefined
+  }
+
+  try {
+    return normalizeResolvedDomain(new URL(normalized).hostname)
+  } catch {
+    return undefined
+  }
+}
+
+const getDisplaySource = (item: RawNewsItem): string => {
+  const primarySource = item.source?.trim() || item.sourceName?.trim()
+  if (primarySource && !isGooglePlaceholderTitle(primarySource)) {
+    return primarySource
+  }
+
+  return (
+    normalizeResolvedDomain(item.resolvedSourceDomain) ||
+    getDomainFromUrl(item.resolvedUrl) ||
+    getDomainFromUrl(item.originalUrl) ||
+    primarySource ||
+    'Fuente desconocida'
+  )
+}
+
 const shouldHideItem = (item: NewsItem): boolean => {
   if (isGooglePlaceholderTitle(item.title)) {
     return true
@@ -152,7 +189,7 @@ const normalizeNewsItem = (item: RawNewsItem): NewsItem => ({
   id: toStringId(item.id),
   sourceName: item.sourceName?.trim() || item.source?.trim() || 'Fuente desconocida',
   title: item.title?.trim() || 'Sin titulo',
-  source: item.source?.trim() || item.sourceName?.trim() || 'Fuente desconocida',
+  source: getDisplaySource(item),
   summary: item.summary?.trim() || item.content?.trim() || 'Sin resumen disponible.',
   content: item.content?.trim() || undefined,
   originalUrl: item.originalUrl?.trim() || item.url?.trim() || '#',

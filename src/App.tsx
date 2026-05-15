@@ -15,6 +15,7 @@ import { DEFAULT_VISIBLE_CATEGORIES } from './constants/categories'
 
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
 const AUTH_USER_STORAGE_KEY = 'fairwork-user'
+const VISIBLE_CATEGORIES_STORAGE_KEY = 'fairwork-visible-categories'
 type ViewMode = 'monitor' | 'search' | 'editorial'
 const VIEW_MODE_TITLES: Record<ViewMode, string> = {
   monitor: 'Monitor',
@@ -47,13 +48,36 @@ const getStoredUser = (): AuthUser | null => {
   }
 }
 
+const getStoredVisibleCategories = (): Set<NewsCategory> => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_VISIBLE_CATEGORIES
+  }
+
+  const rawValue = window.localStorage.getItem(VISIBLE_CATEGORIES_STORAGE_KEY)
+
+  if (!rawValue) {
+    return DEFAULT_VISIBLE_CATEGORIES
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as unknown
+    if (!Array.isArray(parsed)) return DEFAULT_VISIBLE_CATEGORIES
+    const valid = (parsed as string[]).filter((c): c is NewsCategory =>
+      (NEWS_CATEGORIES as readonly string[]).includes(c),
+    )
+    return valid.length > 0 ? new Set(valid) : DEFAULT_VISIBLE_CATEGORIES
+  } catch {
+    return DEFAULT_VISIBLE_CATEGORIES
+  }
+}
+
 function App() {
   const queryClient = useQueryClient()
   const [viewMode, setViewMode] = useState<ViewMode>('monitor')
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
-  const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(DEFAULT_VISIBLE_CATEGORIES)
+  const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(() => getStoredVisibleCategories())
   const [categoryOrder, setCategoryOrder] = useState<NewsCategory[]>(CATEGORIES)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [searchByCategory, setSearchByCategory] = useState<Record<NewsCategory, string>>(
@@ -98,6 +122,14 @@ function App() {
 
     window.localStorage.removeItem(AUTH_USER_STORAGE_KEY)
   }, [currentUser])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(
+      VISIBLE_CATEGORIES_STORAGE_KEY,
+      JSON.stringify([...visibleCategories]),
+    )
+  }, [visibleCategories])
 
   useEffect(() => {
     if (typeof document === 'undefined') {

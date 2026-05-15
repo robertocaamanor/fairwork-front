@@ -361,18 +361,27 @@ function App() {
             <span className="text-sm font-medium text-cyan-200">
               {selectedNewsIds.size} noticias seleccionadas
             </span>
-            {currentUser.isAdmin || currentUser.canSendToN8n ? (
+            <div className="flex items-center gap-2">
+              {currentUser.isAdmin || currentUser.canSendToN8n ? (
+                <button
+                  type="button"
+                  onClick={() => sendMultipleToN8nMutation.mutate(Array.from(selectedNewsIds))}
+                  disabled={sendMultipleToN8nMutation.isPending}
+                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
+                >
+                  {sendMultipleToN8nMutation.isPending ? 'Enviando...' : 'Enviar a n8n'}
+                </button>
+              ) : (
+                <span className="text-xs text-zinc-400">Tu usuario no puede enviar a n8n.</span>
+              )}
               <button
                 type="button"
-                onClick={() => sendMultipleToN8nMutation.mutate(Array.from(selectedNewsIds))}
-                disabled={sendMultipleToN8nMutation.isPending}
-                className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
+                onClick={() => setSelectedNewsIds(new Set())}
+                className="rounded-lg border border-zinc-600 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:bg-zinc-700"
               >
-                {sendMultipleToN8nMutation.isPending ? 'Enviando...' : 'Enviar a n8n'}
+                Deseleccionar todo
               </button>
-            ) : (
-              <span className="text-xs text-zinc-400">Tu usuario no puede enviar a n8n.</span>
-            )}
+            </div>
           </div>
         ) : null}
 

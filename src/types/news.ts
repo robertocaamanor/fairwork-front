@@ -2,7 +2,7 @@ export const NEWS_CATEGORIES = [
   'tv_chilena',
   'tv_internacional',
   'musica',
-  'farandula',
+  'tecnologia',
   'streaming',
   'radio',
   'fiebre_de_baile',

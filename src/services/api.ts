@@ -64,7 +64,7 @@ interface RawNewsItem {
   content?: string
   originalUrl?: string
   url?: string
-  category?: NewsCategory
+  category?: NewsCategory | string
   publishedAt?: string
   createdAt?: string
   score?: number
@@ -138,6 +138,16 @@ const shouldHideItem = (item: NewsItem): boolean => {
   return isGoogleIntermediateUrl(item.originalUrl) && !item.resolvedUrl && isGooglePlaceholderText(item.summary)
 }
 
+const normalizeCategory = (category?: string): NewsCategory => {
+  if (category === 'farandula') {
+    return 'tecnologia'
+  }
+
+  return NEWS_CATEGORIES.includes(category as NewsCategory)
+    ? (category as NewsCategory)
+    : 'tv_chilena'
+}
+
 const normalizeNewsItem = (item: RawNewsItem): NewsItem => ({
   id: toStringId(item.id),
   sourceName: item.sourceName?.trim() || item.source?.trim() || 'Fuente desconocida',
@@ -152,7 +162,7 @@ const normalizeNewsItem = (item: RawNewsItem): NewsItem => ({
   cleanContent: item.cleanContent?.trim() || undefined,
   extractedImageUrl: item.extractedImageUrl?.trim() || undefined,
   author: item.author?.trim() || undefined,
-  category: item.category ?? 'tv_chilena',
+  category: normalizeCategory(item.category),
   publishedAt: item.publishedAt ?? item.createdAt ?? new Date().toISOString(),
   score: Number(item.score ?? item.relevanceScore ?? 0),
   status: item.status ?? 'new',

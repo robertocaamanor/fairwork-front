@@ -193,39 +193,6 @@ function App() {
     },
   })
 
-  // Auto-scraping cada minuto
-  useEffect(() => {
-    if (!currentUser?.isAdmin) {
-      return
-    }
-
-    const triggerAutoScraping = async () => {
-      try {
-        console.log('[Auto-Scraping] Ejecutando scraping automático...')
-        const result = await api.triggerScraping()
-        console.log('[Auto-Scraping] Completado:', result.message)
-        await queryClient.invalidateQueries({ queryKey: ['news'] })
-      } catch (error) {
-        console.error('[Auto-Scraping] Error:', error)
-      }
-    }
-
-    // Ejecutar scraping inicial después de 5 segundos
-    const initialTimeout = setTimeout(() => {
-      triggerAutoScraping()
-    }, 5000)
-
-    // Ejecutar scraping cada minuto
-    const intervalId = setInterval(() => {
-      triggerAutoScraping()
-    }, 60000) // 60 segundos = 1 minuto
-
-    return () => {
-      clearTimeout(initialTimeout)
-      clearInterval(intervalId)
-    }
-  }, [currentUser?.isAdmin, queryClient])
-
   const loginMutation = useMutation({
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       api.login(username, password),

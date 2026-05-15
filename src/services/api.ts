@@ -1,28 +1,52 @@
 import axios, { AxiosError } from 'axios'
-import type { LoginResponse, AuthUser } from '../types/auth'
 import type {
   NewsCategory,
+  NewsFilter,
   NewsItem,
   NewsStatusPayload,
   NewsStatus,
 } from '../types/news'
 import { NEWS_CATEGORIES } from '../types/news'
+import type { AuthUser, LoginResponse } from '../types/auth'
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
   timeout: 15000,
 })
 
+const AUTH_TOKEN_STORAGE_KEY = 'fairwork-token'
+
 const getStoredToken = (): string | null => {
   if (typeof window === 'undefined') {
     return null
   }
 
-  return window.localStorage.getItem('fairwork-token')
+  const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+  return token && token.trim().length > 0 ? token : null
+}
+
+export const authStorage = {
+  getToken(): string | null {
+    return getStoredToken()
+  },
+  setToken(token: string) {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
+  },
+  clearToken() {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+  },
 }
 
 apiClient.interceptors.request.use((config) => {
-  const token = getStoredToken()
+  const token = authStorage.getToken()
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -118,7 +142,7 @@ const normalizeNewsItem = (item: RawNewsItem): NewsItem => ({
   id: toStringId(item.id),
   sourceName: item.sourceName?.trim() || item.source?.trim() || 'Fuente desconocida',
   title: item.title?.trim() || 'Sin titulo',
-  source: item.resolvedSourceDomain?.replace(/^www\./i, '')?.trim() || item.sourceName?.replace(/ RSS$/i, '')?.trim() || item.source?.replace(/ RSS$/i, '')?.trim() || 'Fuente desconocida',
+  source: item.source?.trim() || item.sourceName?.trim() || 'Fuente desconocida',
   summary: item.summary?.trim() || item.content?.trim() || 'Sin resumen disponible.',
   content: item.content?.trim() || undefined,
   originalUrl: item.originalUrl?.trim() || item.url?.trim() || '#',
@@ -203,22 +227,6 @@ export const sendNewsToN8n = (id: string | number) => {
   return apiClient.post(`/news/${id}/send-to-n8n`)
 }
 
-export const authStorage = {
-  getToken(): string | null {
-    return getStoredToken()
-  },
-  setToken(token: string) {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('fairwork-token', token)
-    }
-  },
-  clearToken() {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('fairwork-token')
-    }
-  },
-}
-
 export const api = {
   async login(username: string, password: string): Promise<LoginResponse> {
     const response = await apiClient.post('/auth/login', { username, password })
@@ -245,28 +253,66 @@ export const api = {
 
   async getNewsByCategoryWithOffset(
     category: NewsCategory,
-    q: string,
-    filterStatus: string,
-    offset: number
+    query: string,
+    filter: NewsFilter,
+    offset: number,
   ): Promise<NewsItem[]> {
-    const params: Record<string, any> = { category, offset, limit: 20 }
-    if (q) params.q = q
-    if (filterStatus !== 'all') params.status = filterStatus
+    const params: {
+      category: NewsCategory
+      offset: number
+      limit: number
+      q?: string
+      status?: NewsStatus
+    } = {
+      category,
+      offset,
+      limit: 20,
+    }
+
+    const normalizedQuery = query.trim()
+    if (normalizedQuery) {
+      params.q = normalizedQuery
+    }
+
+    if (filter !== 'all' && filter !== 'score70') {
+      params.status = filter
+    }
 
     const response = await apiClient.get('/news', { params })
     return normalizeCollection(response.data)
   },
 
   async searchGlobalNews(
-    q: string,
+    query: string,
     source: string,
-    filterStatus: string,
-    offset: number
+    filter: NewsFilter,
+    offset: number,
   ): Promise<NewsItem[]> {
-    const params: Record<string, any> = { offset, limit: 20 }
-    if (q) params.q = q
-    if (source) params.source = source
-    if (filterStatus !== 'all') params.status = filterStatus
+    const params: {
+      offset: number
+      limit: number
+      q?: string
+      source?: string
+      status?: NewsStatus
+    } = {
+      offset,
+      limit: 20,
+    }
+
+    const normalizedQuery = query.trim()
+    const normalizedSource = source.trim()
+
+    if (normalizedQuery) {
+      params.q = normalizedQuery
+    }
+
+    if (normalizedSource) {
+      params.source = normalizedSource
+    }
+
+    if (filter !== 'all' && filter !== 'score70') {
+      params.status = filter
+    }
 
     const response = await apiClient.get('/news', { params })
     return normalizeCollection(response.data)
@@ -312,12 +358,13 @@ export const api = {
 
   async generateTopicProposals(payload: {
     newsIds: string[]
-    tone?: string
-    requestedProposals?: number
+    tone: string
+    requestedProposals: number
   }): Promise<unknown> {
     const response = await apiClient.post('/editorial/topics/generate-proposals', payload, {
       timeout: 180000,
     })
+
     return response.data
   },
 

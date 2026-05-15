@@ -45,6 +45,62 @@ const htmlToPlainText = (content?: string): string => {
 
 const formatJson = (value: unknown): string => JSON.stringify(value ?? null, null, 2)
 
+const SOCIAL_CHANNEL_LABELS: Record<string, string> = {
+  x: 'X',
+  twitter: 'X',
+  bluesky: 'Bluesky',
+  threads: 'Threads',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  tiktok: 'TikTok',
+  youtube: 'YouTube',
+  telegram: 'Telegram',
+  whatsapp: 'WhatsApp',
+}
+
+const getChannelLabel = (key: string): string => {
+  const normalizedKey = key.trim().toLowerCase()
+  if (SOCIAL_CHANNEL_LABELS[normalizedKey]) {
+    return SOCIAL_CHANNEL_LABELS[normalizedKey]
+  }
+
+  return key
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
+}
+
+const renderStructuredValue = (value: unknown): string => {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value.trim()
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  if (Array.isArray(value) || (value && typeof value === 'object')) {
+    return formatJson(value)
+  }
+
+  return 'Sin contenido generado.'
+}
+
+const getSocialEntries = (value: unknown): Array<{ key: string; label: string; content: string }> => {
+  const record = readRecord(value)
+  if (!record) {
+    return []
+  }
+
+  return Object.entries(record).map(([key, entryValue]) => ({
+    key,
+    label: getChannelLabel(key),
+    content: renderStructuredValue(entryValue),
+  }))
+}
+
 const fieldRows = (fields: Array<[string, unknown]>) =>
   fields.map(([label, value]) => (
     <div key={label} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
@@ -71,6 +127,8 @@ export function TopicProposalDetailPanel({
   const proposal = selectedProposal.proposal
   const seo = readRecord(proposal.seo)
   const wordpressLink = selectedProposal.wordpressLink
+  const socialEntries = getSocialEntries(selectedProposal.social)
+  const gutenbergContent = renderStructuredValue(selectedProposal.gutenberg)
 
   const seoFields: Array<[string, unknown]> = [
     ['Keyword', proposal.keyword ?? seo?.keyword],
@@ -157,9 +215,22 @@ export function TopicProposalDetailPanel({
               <Share2 size={14} />
               Social
             </div>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs text-zinc-200">
-              {formatJson(selectedProposal.social)}
-            </pre>
+            {socialEntries.length > 0 ? (
+              <div className="grid gap-3">
+                {socialEntries.map((entry) => (
+                  <div key={entry.key} className="rounded-lg border border-zinc-800 bg-zinc-900/70 p-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                      {entry.label}
+                    </p>
+                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-zinc-100">
+                      {entry.content}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-400">Sin ejemplos sociales generados.</p>
+            )}
           </div>
 
           <div className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
@@ -167,8 +238,8 @@ export function TopicProposalDetailPanel({
               <FileText size={14} />
               Gutenberg
             </div>
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap text-xs text-zinc-200">
-              {formatJson(selectedProposal.gutenberg)}
+            <pre className="max-h-64 overflow-auto whitespace-pre-wrap font-sans text-sm leading-relaxed text-zinc-200">
+              {gutenbergContent}
             </pre>
           </div>
         </div>

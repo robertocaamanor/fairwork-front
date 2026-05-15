@@ -20,7 +20,6 @@ import { EditorialBoard } from './EditorialBoard'
 import { EditorialContentModal } from './EditorialContentModal'
 import { EditorialStatusTabs } from './EditorialStatusTabs'
 import { RejectReviewModal } from './RejectReviewModal'
-import { TopicProposalCard } from './TopicProposalCard'
 import { TopicProposalDetailPanel } from './TopicProposalDetailPanel'
 
 type EditorialSection = 'reviews' | 'topics'
@@ -256,22 +255,14 @@ export function EditorialWorkspace() {
               ) : (topicProposalsQuery.data ?? []).length === 0 ? (
                 <EmptyState message="No hay propuestas para esta temática." />
               ) : (
-                <>
-                  <TopicProposalDetailPanel
-                    proposals={topicProposalsQuery.data ?? []}
-                    selectedProposalId={selectedTopicProposalId}
-                    isSending={sendTopicProposalMutation.isPending}
-                    sendError={sendTopicProposalError}
-                    onSelectProposal={setSelectedTopicProposalId}
-                    onSendToWordpress={(proposal) => sendTopicProposalMutation.mutate(proposal)}
-                  />
-
-                  <div className="grid gap-4 xl:grid-cols-2">
-                    {(topicProposalsQuery.data ?? []).map((proposal) => (
-                      <TopicProposalCard key={proposal.id} proposal={proposal} />
-                    ))}
-                  </div>
-                </>
+                <TopicProposalDetailPanel
+                  proposals={topicProposalsQuery.data ?? []}
+                  selectedProposalId={selectedTopicProposalId}
+                  isSending={sendTopicProposalMutation.isPending}
+                  sendError={sendTopicProposalError}
+                  onSelectProposal={setSelectedTopicProposalId}
+                  onSendToWordpress={(proposal) => sendTopicProposalMutation.mutate(proposal)}
+                />
               )}
             </div>
           </section>

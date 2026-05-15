@@ -16,7 +16,6 @@ interface NewsColumnProps {
   searchValue: string
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
-  onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
   onLoadMore?: () => void
@@ -34,7 +33,6 @@ export function NewsColumn({
   searchValue,
   onSearchChange,
   onSearchDebounced,
-  onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
   onLoadMore,
@@ -98,8 +96,11 @@ export function NewsColumn({
               <NewsCard
                 key={item.id}
                 item={item}
+                onSendToN8n={onSendToN8n}
+                isSendingToN8n={sendingToN8nItemId === item.id}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
+                canSendToN8n={canSendToN8n}
               />
             ))
           : null}

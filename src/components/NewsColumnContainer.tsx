@@ -13,7 +13,6 @@ interface NewsColumnContainerProps {
   onSearchDebounced: (category: NewsCategory, value: string) => void
   onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
-  onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
   canSendToN8n: boolean
@@ -28,7 +27,6 @@ export function NewsColumnContainer({
   onSearchDebounced,
   onSendToN8n,
   sendingToN8nItemId,
-  onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
   canSendToN8n,
@@ -77,7 +75,6 @@ export function NewsColumnContainer({
       searchValue={searchValue}
       onSearchChange={onSearchChange}
       onSearchDebounced={onSearchDebounced}
-      onOpenRelated={onOpenRelated}
       selectedNewsIds={selectedNewsIds}
       onToggleSelection={onToggleSelection}
       canSendToN8n={canSendToN8n}

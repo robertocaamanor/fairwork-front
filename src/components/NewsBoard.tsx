@@ -11,7 +11,6 @@ interface NewsBoardProps {
   debouncedSearchByCategory: Record<NewsCategory, string>
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
-  onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
   visibleCategories: Set<NewsCategory>
@@ -29,7 +28,6 @@ export function NewsBoard({
   debouncedSearchByCategory,
   onSearchChange,
   onSearchDebounced,
-  onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
   visibleCategories,
@@ -112,7 +110,6 @@ export function NewsBoard({
               sendingToN8nItemId={sendingToN8nItemId}
               onSearchChange={onSearchChange}
               onSearchDebounced={onSearchDebounced}
-              onOpenRelated={onOpenRelated}
               selectedNewsIds={selectedNewsIds}
               onToggleSelection={onToggleSelection}
               canSendToN8n={canSendToN8n}

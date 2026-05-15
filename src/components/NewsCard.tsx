@@ -1,10 +1,13 @@
-import { ExternalLink, Link2 } from 'lucide-react'
+import { ExternalLink, Send } from 'lucide-react'
 import type { NewsItem } from '../types/news'
 
 interface NewsCardProps {
   item: NewsItem
+  onSendToN8n: (id: string) => Promise<unknown>
+  isSendingToN8n: boolean
   isSelected: boolean
   onToggleSelect: () => void
+  canSendToN8n: boolean
 }
 
 const statusStyles: Record<string, string> = {
@@ -37,8 +40,11 @@ const formatDate = (value: string): string => {
 
 export function NewsCard({
   item,
+  onSendToN8n,
+  isSendingToN8n,
   isSelected,
   onToggleSelect,
+  canSendToN8n,
 }: NewsCardProps) {
   const currentStatus = item.status ?? 'new'
 
@@ -78,14 +84,15 @@ export function NewsCard({
 
       <div className="grid grid-cols-2 gap-2">
 
-        <a
-          href={`https://news.google.com/search?q=${encodeURIComponent(item.title)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-600 bg-zinc-700/60 px-2 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700"
+        <button
+          type="button"
+          onClick={() => onSendToN8n(item.id)}
+          disabled={isSendingToN8n || !canSendToN8n}
+          className="inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-600 bg-zinc-700/60 px-2 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Link2 size={14} /> Relacionadas
-        </a>
+          <Send size={14} className={isSendingToN8n ? 'animate-pulse' : ''} />
+          {isSendingToN8n ? 'Enviando...' : 'Relacionadas'}
+        </button>
 
         <a
           href={item.originalUrl}

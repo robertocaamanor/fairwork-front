@@ -11,7 +11,6 @@ interface GlobalSearchBoardProps {
   filter: NewsFilter
   onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
-  onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
   canSendToN8n: boolean
@@ -21,7 +20,6 @@ export function GlobalSearchBoard({
   filter,
   onSendToN8n,
   sendingToN8nItemId,
-  onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
   canSendToN8n,
@@ -137,8 +135,11 @@ export function GlobalSearchBoard({
               <NewsCard
                 key={item.id}
                 item={item}
+                onSendToN8n={onSendToN8n}
+                isSendingToN8n={sendingToN8nItemId === item.id}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
+                canSendToN8n={canSendToN8n}
               />
             ))}
           </div>

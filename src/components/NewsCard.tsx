@@ -64,8 +64,6 @@ export function NewsCard({
         <h3 className="text-sm font-semibold leading-snug text-zinc-100">{item.title}</h3>
       </div>
 
-      <p className="mb-3 text-xs text-zinc-300">{item.summary}</p>
-
       {item.imageUrl ? (
         <img
           src={item.imageUrl}

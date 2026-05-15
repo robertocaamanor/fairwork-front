@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { CATEGORY_LABELS } from '../constants/categories'
-import type { NewsCategory, NewsItem, NewsFilter } from '../types/news'
+import type { NewsCategory, NewsFilter } from '../types/news'
 import { NewsColumnContainer } from './NewsColumnContainer'
 
 interface NewsBoardProps {

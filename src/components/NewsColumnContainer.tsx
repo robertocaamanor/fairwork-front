@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { NewsColumn } from './NewsColumn'
 import { api } from '../services/api'
-import type { NewsCategory, NewsItem, NewsFilter } from '../types/news'
+import type { NewsCategory, NewsFilter } from '../types/news'
 
 interface NewsColumnContainerProps {
   category: NewsCategory

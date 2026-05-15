@@ -5,7 +5,7 @@ import { api } from '../services/api'
 import { NewsCard } from './NewsCard'
 import { LoadingState } from './LoadingState'
 import { EmptyState } from './EmptyState'
-import type { NewsFilter, NewsItem } from '../types/news'
+import type { NewsFilter } from '../types/news'
 
 interface GlobalSearchBoardProps {
   filter: NewsFilter

@@ -290,6 +290,7 @@ function App() {
           debouncedSearchByCategory={debouncedSearchByCategory}
           onSearchChange={handleColumnSearchChange}
           onSearchDebounced={handleColumnSearchDebounced}
+          onOpenRelated={setRelatedNewsTarget}
           selectedNewsIds={selectedNewsIds}
           onToggleSelection={toggleNewsSelection}
           visibleCategories={visibleCategories}
@@ -302,6 +303,7 @@ function App() {
           filter={filter}
           onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
           sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
+          onOpenRelated={setRelatedNewsTarget}
           selectedNewsIds={selectedNewsIds}
           onToggleSelection={toggleNewsSelection}
           canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}

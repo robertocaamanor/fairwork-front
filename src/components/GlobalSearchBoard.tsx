@@ -5,12 +5,13 @@ import { api } from '../services/api'
 import { NewsCard } from './NewsCard'
 import { LoadingState } from './LoadingState'
 import { EmptyState } from './EmptyState'
-import type { NewsFilter } from '../types/news'
+import type { NewsFilter, NewsItem } from '../types/news'
 
 interface GlobalSearchBoardProps {
   filter: NewsFilter
   onSendToN8n: (id: string) => Promise<unknown>
   sendingToN8nItemId?: string
+  onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>
   onToggleSelection: (id: string) => void
   canSendToN8n: boolean
@@ -20,6 +21,7 @@ export function GlobalSearchBoard({
   filter,
   onSendToN8n,
   sendingToN8nItemId,
+  onOpenRelated,
   selectedNewsIds,
   onToggleSelection,
   canSendToN8n,
@@ -137,6 +139,7 @@ export function GlobalSearchBoard({
                 item={item}
                 onSendToN8n={onSendToN8n}
                 isSendingToN8n={sendingToN8nItemId === item.id}
+                onOpenRelated={onOpenRelated}
                 isSelected={selectedNewsIds.has(item.id)}
                 onToggleSelect={() => onToggleSelection(item.id)}
                 canSendToN8n={canSendToN8n}

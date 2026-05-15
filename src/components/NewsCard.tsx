@@ -1,10 +1,11 @@
-import { ExternalLink, Send } from 'lucide-react'
+import { ExternalLink, Link2, Send } from 'lucide-react'
 import type { NewsItem } from '../types/news'
 
 interface NewsCardProps {
   item: NewsItem
   onSendToN8n: (id: string) => Promise<unknown>
   isSendingToN8n: boolean
+  onOpenRelated: (item: NewsItem) => void
   isSelected: boolean
   onToggleSelect: () => void
   canSendToN8n: boolean
@@ -42,6 +43,7 @@ export function NewsCard({
   item,
   onSendToN8n,
   isSendingToN8n,
+  onOpenRelated,
   isSelected,
   onToggleSelect,
   canSendToN8n,
@@ -80,16 +82,26 @@ export function NewsCard({
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-
+      <div className="mb-2">
         <button
           type="button"
           onClick={() => onSendToN8n(item.id)}
           disabled={isSendingToN8n || !canSendToN8n}
-          className="inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-600 bg-zinc-700/60 px-2 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Send size={14} className={isSendingToN8n ? 'animate-pulse' : ''} />
-          {isSendingToN8n ? 'Enviando...' : 'Relacionadas'}
+          {isSendingToN8n ? 'Enviando...' : 'Enviar a n8n'}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+
+        <button
+          type="button"
+          onClick={() => onOpenRelated(item)}
+          className="inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-600 bg-zinc-700/60 px-2 py-2 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700"
+        >
+          <Link2 size={14} /> Relacionadas
         </button>
 
         <a

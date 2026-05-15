@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { NewsBoard } from './components/NewsBoard'
 import { RelatedNewsModal } from './components/news/RelatedNewsModal'
@@ -73,7 +74,15 @@ const getStoredVisibleCategories = (): Set<NewsCategory> => {
 
 function App() {
   const queryClient = useQueryClient()
-  const [viewMode, setViewMode] = useState<ViewMode>('monitor')
+  const location = useLocation()
+  const navigate = useNavigate()
+  
+  const viewMode: ViewMode = location.pathname.startsWith('/search')
+    ? 'search'
+    : location.pathname.startsWith('/editorial')
+      ? 'editorial'
+      : 'monitor'
+
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
@@ -308,42 +317,51 @@ function App() {
         lastUpdated={latestNewsQuery.dataUpdatedAt ? new Date(latestNewsQuery.dataUpdatedAt) : undefined}
         onOpenCategories={() => setIsCategoryModalOpen(true)}
         viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        onViewModeChange={(mode) => navigate(`/${mode}`)}
         currentUser={currentUser}
         onLogout={handleLogout}
       />
 
-      {viewMode === 'monitor' ? (
-        <NewsBoard
-          categories={categoryOrder}
-          filter={filter}
-          onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
-          sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
-          searchByCategory={searchByCategory}
-          debouncedSearchByCategory={debouncedSearchByCategory}
-          onSearchChange={handleColumnSearchChange}
-          onSearchDebounced={handleColumnSearchDebounced}
-          onOpenRelated={setRelatedNewsTarget}
-          selectedNewsIds={selectedNewsIds}
-          onToggleSelection={toggleNewsSelection}
-          visibleCategories={visibleCategories}
-          onReorderCategory={handleReorderCategory}
-          topPaddingClass="pt-36 pb-24"
-          canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
+      <Routes>
+        <Route
+          path="/monitor"
+          element={
+            <NewsBoard
+              categories={categoryOrder}
+              filter={filter}
+              onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
+              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
+              searchByCategory={searchByCategory}
+              debouncedSearchByCategory={debouncedSearchByCategory}
+              onSearchChange={handleColumnSearchChange}
+              onSearchDebounced={handleColumnSearchDebounced}
+              onOpenRelated={setRelatedNewsTarget}
+              selectedNewsIds={selectedNewsIds}
+              onToggleSelection={toggleNewsSelection}
+              visibleCategories={visibleCategories}
+              onReorderCategory={handleReorderCategory}
+              topPaddingClass="pt-36 pb-24"
+              canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
+            />
+          }
         />
-      ) : viewMode === 'search' ? (
-        <GlobalSearchBoard
-          filter={filter}
-          onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
-          sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
-          onOpenRelated={setRelatedNewsTarget}
-          selectedNewsIds={selectedNewsIds}
-          onToggleSelection={toggleNewsSelection}
-          canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
+        <Route
+          path="/search"
+          element={
+            <GlobalSearchBoard
+              filter={filter}
+              onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
+              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
+              onOpenRelated={setRelatedNewsTarget}
+              selectedNewsIds={selectedNewsIds}
+              onToggleSelection={toggleNewsSelection}
+              canSendToN8n={currentUser.isAdmin || currentUser.canSendToN8n}
+            />
+          }
         />
-      ) : (
-        <EditorialWorkspace />
-      )}
+        <Route path="/editorial" element={<EditorialWorkspace />} />
+        <Route path="*" element={<Navigate to="/monitor" replace />} />
+      </Routes>
 
       {isCategoryModalOpen ? (
         <CategoryVisibilityModal

@@ -4,7 +4,6 @@ export const NEWS_CATEGORIES = [
   'musica',
   'tecnologia',
   'streaming',
-  'radio',
   'fiebre_de_baile',
 ] as const
 

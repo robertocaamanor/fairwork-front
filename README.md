@@ -64,7 +64,6 @@ npm run build
   - `musica`
   - `farandula`
   - `streaming`
-  - `radio`
 - Cards de noticias con:
   - titulo, fuente, hora, resumen
   - imagen opcional

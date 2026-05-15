@@ -17,8 +17,8 @@ export function CategoryVisibilityModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl">
-        <header className="flex items-center justify-between border-b border-zinc-800 p-4">
+      <div className="flex w-full max-w-md flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl" style={{ maxHeight: 'calc(100vh - 2rem)' }}>
+        <header className="flex shrink-0 items-center justify-between border-b border-zinc-800 p-4">
           <h2 className="text-lg font-semibold text-zinc-100">Columnas visibles</h2>
           <button
             type="button"
@@ -29,7 +29,7 @@ export function CategoryVisibilityModal({
           </button>
         </header>
 
-        <div className="p-4">
+        <div className="min-h-0 overflow-y-auto p-4">
           <p className="mb-4 text-sm text-zinc-400">
             Selecciona las categorías que deseas mostrar u ocultar en el panel principal.
           </p>
@@ -77,7 +77,7 @@ export function CategoryVisibilityModal({
           </div>
         </div>
 
-        <footer className="flex justify-end border-t border-zinc-800 p-4">
+        <footer className="flex shrink-0 justify-end border-t border-zinc-800 p-4">
           <button
             type="button"
             onClick={onClose}

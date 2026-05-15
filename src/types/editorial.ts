@@ -9,6 +9,7 @@ export type EditorialReviewStatus = (typeof EDITORIAL_STATUSES)[number]
 
 export interface EditorialProposal {
   titulo?: string
+  titulo_seo?: string
   bajada?: string
   keyword?: string
   meta_description?: string

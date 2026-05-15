@@ -132,7 +132,7 @@ export function TopicProposalDetailPanel({
 
   const seoFields: Array<[string, unknown]> = [
     ['Keyword', proposal.keyword ?? seo?.keyword],
-    ['Meta title', proposal.meta_title ?? proposal.seo_title ?? seo?.title ?? seo?.meta_title],
+    ['Meta title', proposal.titulo_seo ?? proposal.meta_title ?? proposal.seo_title ?? seo?.title ?? seo?.meta_title],
     ['Meta description', proposal.meta_description ?? seo?.description ?? seo?.meta_description],
     ['Slug', proposal.slug ?? seo?.slug],
     ['Categoria sugerida', proposal.categoria_sugerida],

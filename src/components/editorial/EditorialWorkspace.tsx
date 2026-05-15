@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, Search } from 'lucide-react'
-import type { EditorialReview, EditorialReviewStatus } from '../../types/editorial'
+import type {
+  EditorialReview,
+  EditorialReviewStatus,
+  EditorialTopicProposal,
+} from '../../types/editorial'
 import { getApiErrorMessage } from '../../services/api'
 import {
   approveEditorialReview,
@@ -9,6 +13,7 @@ import {
   getEditorialReviews,
   getTopicProposals,
   rejectEditorialReview,
+  sendTopicProposalToWordpressDraft,
 } from '../../services/editorialApi'
 import { EmptyState } from '../EmptyState'
 import { EditorialBoard } from './EditorialBoard'
@@ -16,6 +21,7 @@ import { EditorialContentModal } from './EditorialContentModal'
 import { EditorialStatusTabs } from './EditorialStatusTabs'
 import { RejectReviewModal } from './RejectReviewModal'
 import { TopicProposalCard } from './TopicProposalCard'
+import { TopicProposalDetailPanel } from './TopicProposalDetailPanel'
 
 type EditorialSection = 'reviews' | 'topics'
 
@@ -27,6 +33,7 @@ export function EditorialWorkspace() {
   const [rejectingReview, setRejectingReview] = useState<EditorialReview | null>(null)
   const [topicSearch, setTopicSearch] = useState('')
   const [topicId, setTopicId] = useState('')
+  const [selectedTopicProposalId, setSelectedTopicProposalId] = useState<number | null>(null)
 
   const reviewsQuery = useQuery({
     queryKey: ['editorial', 'reviews', status],
@@ -66,9 +73,24 @@ export function EditorialWorkspace() {
     },
   })
 
+  const sendTopicProposalMutation = useMutation({
+    mutationFn: (proposal: EditorialTopicProposal) =>
+      sendTopicProposalToWordpressDraft(proposal.topicId, proposal.id),
+    onSuccess: async (proposal) => {
+      setSelectedTopicProposalId(proposal.id)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['editorial', 'topics'] }),
+        queryClient.invalidateQueries({ queryKey: ['editorial', 'topics', proposal.topicId, 'proposals'] }),
+      ])
+    },
+  })
+
   const reviewError = reviewsQuery.error ? getApiErrorMessage(reviewsQuery.error) : undefined
   const topicError = topicProposalsQuery.error ? getApiErrorMessage(topicProposalsQuery.error) : undefined
   const topicsError = topicsQuery.error ? getApiErrorMessage(topicsQuery.error) : undefined
+  const sendTopicProposalError = sendTopicProposalMutation.error
+    ? getApiErrorMessage(sendTopicProposalMutation.error)
+    : undefined
   const mutationError = approveMutation.error ?? rejectMutation.error
   const reviewMutationError = mutationError ? getApiErrorMessage(mutationError) : undefined
   const isSubmitting = approveMutation.isPending || rejectMutation.isPending
@@ -118,6 +140,7 @@ export function EditorialWorkspace() {
                 onChange={(event) => {
                   setTopicSearch(event.target.value)
                   setTopicId('')
+                  setSelectedTopicProposalId(null)
                 }}
                 placeholder="Buscar temática por título"
                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none ring-cyan-400/40 focus:ring"
@@ -185,6 +208,7 @@ export function EditorialWorkspace() {
                         type="button"
                         onClick={() => {
                           setTopicId(topic.id)
+                          setSelectedTopicProposalId(null)
                         }}
                         className={`rounded-lg border p-3 text-left transition ${
                           isSelected
@@ -232,11 +256,22 @@ export function EditorialWorkspace() {
               ) : (topicProposalsQuery.data ?? []).length === 0 ? (
                 <EmptyState message="No hay propuestas para esta temática." />
               ) : (
-                <div className="grid gap-4 xl:grid-cols-2">
-                  {(topicProposalsQuery.data ?? []).map((proposal) => (
-                    <TopicProposalCard key={proposal.id} proposal={proposal} />
-                  ))}
-                </div>
+                <>
+                  <TopicProposalDetailPanel
+                    proposals={topicProposalsQuery.data ?? []}
+                    selectedProposalId={selectedTopicProposalId}
+                    isSending={sendTopicProposalMutation.isPending}
+                    sendError={sendTopicProposalError}
+                    onSelectProposal={setSelectedTopicProposalId}
+                    onSendToWordpress={(proposal) => sendTopicProposalMutation.mutate(proposal)}
+                  />
+
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    {(topicProposalsQuery.data ?? []).map((proposal) => (
+                      <TopicProposalCard key={proposal.id} proposal={proposal} />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </section>

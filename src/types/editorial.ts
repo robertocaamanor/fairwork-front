@@ -66,6 +66,8 @@ export interface EditorialTopicProposal {
   gutenberg?: Record<string, unknown> | null
   status: EditorialTopicProposalStatus
   createdByUserId?: string | null
+  wordpressPostId?: number | null
+  wordpressLink?: string | null
   createdAt: string
   updatedAt: string
 }

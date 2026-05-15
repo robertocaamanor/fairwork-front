@@ -87,6 +87,8 @@ const normalizeTopicProposal = (payload: unknown): EditorialTopicProposal => {
     gutenberg: normalizeRecord(item.gutenberg),
     status: (item.status ?? 'pending_review') as EditorialTopicProposalStatus,
     createdByUserId: item.createdByUserId ?? null,
+    wordpressPostId: item.wordpressPostId ?? null,
+    wordpressLink: item.wordpressLink ?? null,
     createdAt: String(item.createdAt ?? new Date().toISOString()),
     updatedAt: String(item.updatedAt ?? new Date().toISOString()),
   }
@@ -154,6 +156,18 @@ export const getTopicProposals = async (topicId: string): Promise<EditorialTopic
   }
 
   return response.data.map((item: unknown) => normalizeTopicProposal(item))
+}
+
+export const sendTopicProposalToWordpressDraft = async (
+  topicId: string,
+  proposalId: number,
+): Promise<EditorialTopicProposal> => {
+  const response = await editorialClient.post(
+    `/editorial/topics/${encodeURIComponent(topicId)}/proposals/${proposalId}/wordpress-draft`,
+    { status: 'draft' },
+  )
+
+  return normalizeTopicProposal(response.data)
 }
 
 export const getEditorialTopics = async (query?: string): Promise<EditorialTopic[]> => {

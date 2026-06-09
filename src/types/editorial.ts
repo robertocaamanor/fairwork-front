@@ -50,6 +50,10 @@ export type EditorialTopicProposalStatus = (typeof EDITORIAL_TOPIC_PROPOSAL_STAT
 export interface EditorialTopicSource {
   title?: string
   url?: string
+  originalUrl?: string
+  resolvedUrl?: string
+  sourceUrl?: string
+  mediaName?: string
   sourceName?: string
   summary?: string
 }

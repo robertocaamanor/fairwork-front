@@ -60,12 +60,25 @@ const normalizeSources = (value: unknown): EditorialTopicSource[] => {
   }
 
   return value.map((item) => {
-    const source = (item ?? {}) as Partial<EditorialTopicSource>
+    const source = (item ?? {}) as Partial<EditorialTopicSource> & {
+      media?: string
+      name?: string
+      originalUrl?: string
+      resolvedUrl?: string
+      sourceUrl?: string
+      link?: string
+    }
+    const sourceName = source.sourceName ?? source.mediaName ?? source.media ?? source.name
+    const url = source.url ?? source.resolvedUrl ?? source.originalUrl ?? source.link ?? source.sourceUrl
 
     return {
       title: source.title ? String(source.title) : undefined,
-      url: source.url ? String(source.url) : undefined,
-      sourceName: source.sourceName ? String(source.sourceName) : undefined,
+      url: url ? String(url) : undefined,
+      originalUrl: source.originalUrl ? String(source.originalUrl) : undefined,
+      resolvedUrl: source.resolvedUrl ? String(source.resolvedUrl) : undefined,
+      sourceUrl: source.sourceUrl ? String(source.sourceUrl) : undefined,
+      mediaName: source.mediaName ? String(source.mediaName) : undefined,
+      sourceName: sourceName ? String(sourceName) : undefined,
       summary: source.summary ? String(source.summary) : undefined,
     }
   })

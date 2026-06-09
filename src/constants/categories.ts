@@ -16,7 +16,6 @@ export const CATEGORY_LABELS: Record<NewsCategory, string> = {
   vina_del_mar: 'Festival de Viña',
   coachella: 'Coachella',
   fiebre_de_baile: 'Fiebre de Baile',
-  el_internado_mega: 'El Internado Mega',
   vecinos_al_limite: 'Vecinos al Límite',
 }
 
@@ -36,7 +35,6 @@ export const CATEGORY_ACCENTS: Record<NewsCategory, string> = {
   vina_del_mar: 'border-l-4 border-orange-400',
   coachella: 'border-l-4 border-lime-400',
   fiebre_de_baile: 'border-l-4 border-pink-500',
-  el_internado_mega: 'border-l-4 border-orange-500',
   vecinos_al_limite: 'border-l-4 border-teal-500',
 }
 
@@ -56,7 +54,6 @@ export const CATEGORY_HEADER_ACCENTS: Record<NewsCategory, string> = {
   vina_del_mar: 'text-orange-300',
   coachella: 'text-lime-300',
   fiebre_de_baile: 'text-pink-300',
-  el_internado_mega: 'text-orange-300',
   vecinos_al_limite: 'text-teal-300',
 }
 

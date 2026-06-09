@@ -14,7 +14,6 @@ export const NEWS_CATEGORIES = [
   'vina_del_mar',
   'coachella',
   'fiebre_de_baile',
-  'el_internado_mega',
   'vecinos_al_limite',
 ] as const
 

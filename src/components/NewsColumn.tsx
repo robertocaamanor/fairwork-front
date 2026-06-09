@@ -11,7 +11,7 @@ interface NewsColumnProps {
   items: NewsItem[]
   isLoading: boolean
   error?: string
-  onSendToN8n: (id: string) => Promise<unknown>
+  onSendToN8n: (item: NewsItem) => void
   sendingToN8nItemId?: string
   searchValue: string
   onSearchChange: (category: NewsCategory, value: string) => void

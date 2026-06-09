@@ -48,3 +48,8 @@ export interface NewsItem {
 export interface NewsStatusPayload {
   status: NewsStatus
 }
+
+export interface SendToN8nPayload {
+  editorialRating: number
+  editorialContext?: string
+}

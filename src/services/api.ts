@@ -3,6 +3,7 @@ import type {
   NewsCategory,
   NewsFilter,
   NewsItem,
+  SendToN8nPayload,
   NewsStatusPayload,
   NewsStatus,
 } from '../types/news'
@@ -270,8 +271,8 @@ export const getApiErrorMessage = (error: unknown): string => {
   return 'Ocurrio un error inesperado al comunicarse con la API.'
 }
 
-export const sendNewsToN8n = (id: string | number) => {
-  return apiClient.post(`/news/${id}/send-to-n8n`)
+export const sendNewsToN8n = (id: string | number, payload: SendToN8nPayload) => {
+  return apiClient.post(`/news/${id}/send-to-n8n`, payload)
 }
 
 export const api = {
@@ -394,12 +395,12 @@ export const api = {
     return normalizeNewsItem(response.data as RawNewsItem)
   },
 
-  async sendNewsToN8n(id: string | number): Promise<{
+  async sendNewsToN8n(id: string | number, payload: SendToN8nPayload): Promise<{
     success: boolean
     message: string
     newsId: string
   }> {
-    const response = await sendNewsToN8n(id)
+    const response = await sendNewsToN8n(id, payload)
     return response.data as { success: boolean; message: string; newsId: string }
   },
 

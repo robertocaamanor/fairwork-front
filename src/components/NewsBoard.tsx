@@ -5,7 +5,7 @@ import { NewsColumnContainer } from './NewsColumnContainer'
 
 interface NewsBoardProps {
   categories: NewsCategory[]
-  onSendToN8n: (id: string) => Promise<unknown>
+  onSendToN8n: (item: NewsItem) => void
   sendingToN8nItemId?: string
   searchByCategory: Record<NewsCategory, string>
   debouncedSearchByCategory: Record<NewsCategory, string>

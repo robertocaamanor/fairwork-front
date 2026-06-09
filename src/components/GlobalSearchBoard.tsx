@@ -9,7 +9,7 @@ import type { NewsFilter, NewsItem } from '../types/news'
 
 interface GlobalSearchBoardProps {
   filter: NewsFilter
-  onSendToN8n: (id: string) => Promise<unknown>
+  onSendToN8n: (item: NewsItem) => void
   sendingToN8nItemId?: string
   onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>

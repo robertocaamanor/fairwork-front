@@ -4,12 +4,13 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { Header } from './components/Header'
 import { NewsBoard } from './components/NewsBoard'
 import { RelatedNewsModal } from './components/news/RelatedNewsModal'
+import { SendToN8nModal } from './components/news/SendToN8nModal'
 import { CategoryVisibilityModal } from './components/CategoryVisibilityModal'
 import { GlobalSearchBoard } from './components/GlobalSearchBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { EditorialWorkspace } from './components/editorial/EditorialWorkspace'
 import { NEWS_CATEGORIES } from './types/news'
-import type { NewsCategory, NewsFilter, NewsItem } from './types/news'
+import type { NewsCategory, NewsFilter, NewsItem, SendToN8nPayload } from './types/news'
 import type { AuthUser } from './types/auth'
 import { api, authStorage, getApiErrorMessage } from './services/api'
 import { DEFAULT_VISIBLE_CATEGORIES } from './constants/categories'
@@ -85,6 +86,7 @@ function App() {
 
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
+  const [sendToN8nTarget, setSendToN8nTarget] = useState<NewsItem | null>(null)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
   const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(() => getStoredVisibleCategories())
   const [categoryOrder, setCategoryOrder] = useState<NewsCategory[]>(CATEGORIES)
@@ -207,10 +209,12 @@ function App() {
   })
 
   const sendToN8nMutation = useMutation({
-    mutationFn: (id: string) => api.sendNewsToN8n(id),
-    onSuccess: (_result, id) => {
+    mutationFn: ({ id, payload }: { id: string; payload: SendToN8nPayload }) =>
+      api.sendNewsToN8n(id, payload),
+    onSuccess: (_result, { id }) => {
       setErrorMessage(null)
       setMessage('Articulo enviado para generar borrador.')
+      setSendToN8nTarget(null)
 
       queryClient.setQueriesData({ queryKey: ['news'] }, (oldData) => {
         if (Array.isArray(oldData)) {
@@ -247,6 +251,12 @@ function App() {
     },
   })
 
+  const openSendToN8nModal = useCallback((item: NewsItem) => {
+    setMessage(null)
+    setErrorMessage(null)
+    setSendToN8nTarget(item)
+  }, [])
+
   const loginMutation = useMutation({
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       api.login(username, password),
@@ -270,6 +280,7 @@ function App() {
     setCurrentUser(null)
     setSelectedNewsIds(new Set())
     setRelatedNewsTarget(null)
+    setSendToN8nTarget(null)
     setMessage(null)
     setErrorMessage(null)
     queryClient.clear()
@@ -329,8 +340,8 @@ function App() {
             <NewsBoard
               categories={categoryOrder}
               filter={filter}
-              onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
-              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
+              onSendToN8n={openSendToN8nModal}
+              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables?.id : undefined}
               searchByCategory={searchByCategory}
               debouncedSearchByCategory={debouncedSearchByCategory}
               onSearchChange={handleColumnSearchChange}
@@ -350,8 +361,8 @@ function App() {
           element={
             <GlobalSearchBoard
               filter={filter}
-              onSendToN8n={(id) => sendToN8nMutation.mutateAsync(id)}
-              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables : undefined}
+              onSendToN8n={openSendToN8nModal}
+              sendingToN8nItemId={sendToN8nMutation.isPending ? sendToN8nMutation.variables?.id : undefined}
               onOpenRelated={setRelatedNewsTarget}
               selectedNewsIds={selectedNewsIds}
               onToggleSelection={toggleNewsSelection}
@@ -372,6 +383,26 @@ function App() {
       ) : null}
 
       <RelatedNewsModal item={relatedNewsTarget} onClose={() => setRelatedNewsTarget(null)} />
+
+      <SendToN8nModal
+        item={sendToN8nTarget}
+        isSubmitting={sendToN8nMutation.isPending}
+        onCancel={() => {
+          if (!sendToN8nMutation.isPending) {
+            setSendToN8nTarget(null)
+          }
+        }}
+        onConfirm={(payload) => {
+          if (!sendToN8nTarget) {
+            return
+          }
+
+          void sendToN8nMutation.mutateAsync({
+            id: sendToN8nTarget.id,
+            payload,
+          })
+        }}
+      />
 
       <div className="pointer-events-none fixed bottom-4 left-1/2 z-20 w-full max-w-xl -translate-x-1/2 px-4 flex flex-col gap-2">
         {selectedNewsIds.size > 0 ? (

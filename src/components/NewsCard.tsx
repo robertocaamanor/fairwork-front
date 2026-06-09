@@ -3,7 +3,7 @@ import type { NewsItem } from '../types/news'
 
 interface NewsCardProps {
   item: NewsItem
-  onSendToN8n: (id: string) => Promise<unknown>
+  onSendToN8n: (item: NewsItem) => void
   isSendingToN8n: boolean
   onOpenRelated: (item: NewsItem) => void
   isSelected: boolean
@@ -85,7 +85,7 @@ export function NewsCard({
       <div className="mb-2">
         <button
           type="button"
-          onClick={() => onSendToN8n(item.id)}
+          onClick={() => onSendToN8n(item)}
           disabled={isSendingToN8n || !canSendToN8n}
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/25 disabled:cursor-not-allowed disabled:opacity-60"
         >

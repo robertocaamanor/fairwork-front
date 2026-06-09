@@ -11,7 +11,7 @@ interface NewsColumnContainerProps {
   debouncedSearch: string
   onSearchChange: (category: NewsCategory, value: string) => void
   onSearchDebounced: (category: NewsCategory, value: string) => void
-  onSendToN8n: (id: string) => Promise<unknown>
+  onSendToN8n: (item: NewsItem) => void
   sendingToN8nItemId?: string
   onOpenRelated: (item: NewsItem) => void
   selectedNewsIds: Set<string>

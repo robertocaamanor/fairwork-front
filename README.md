@@ -55,6 +55,31 @@ Aplicacion disponible por defecto en `http://localhost:5173`.
 npm run build
 ```
 
+## Deploy en Railway
+
+Este frontend ya esta preparado para desplegarse como un servicio separado dentro del mismo proyecto de Railway donde corren backend y n8n.
+
+Directorio raiz del servicio: `news-monitor-web`
+
+Variable obligatoria:
+
+```env
+VITE_API_BASE_URL=https://tu-backend.up.railway.app
+```
+
+Notas operativas:
+
+- Railway detecta `railway.json` y construye con el `Dockerfile` del proyecto.
+- El build de Vite toma `VITE_API_BASE_URL` en tiempo de build.
+- Nginx expone un healthcheck en `/healthz`.
+
+Pasos recomendados:
+
+1. Crea un nuevo servicio en Railway apuntando a esta carpeta.
+2. Define `VITE_API_BASE_URL` con la URL publica del backend.
+3. Ejecuta el primer deploy.
+4. Verifica `https://tu-frontend.up.railway.app/healthz`.
+
 ## Funcionalidades incluidas
 
 - Dashboard oscuro con barra superior fija (`Monitor Editorial`).

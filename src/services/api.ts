@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import type {
+  EditorialTone,
   NewsCategory,
   NewsFilter,
   NewsItem,
@@ -406,7 +407,8 @@ export const api = {
 
   async generateTopicProposals(payload: {
     newsIds: string[]
-    tone: string
+    tone: EditorialTone
+    editorialContext?: string
     requestedProposals: number
   }): Promise<unknown> {
     const response = await apiClient.post('/editorial/topics/generate-proposals', payload, {

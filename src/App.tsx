@@ -9,8 +9,9 @@ import { CategoryVisibilityModal } from './components/CategoryVisibilityModal'
 import { GlobalSearchBoard } from './components/GlobalSearchBoard'
 import { LoginScreen } from './components/LoginScreen'
 import { EditorialWorkspace } from './components/editorial/EditorialWorkspace'
+import { GenerateTopicProposalsModal } from './components/editorial/GenerateTopicProposalsModal'
 import { NEWS_CATEGORIES } from './types/news'
-import type { NewsCategory, NewsFilter, NewsItem, SendToN8nPayload } from './types/news'
+import type { EditorialTone, NewsCategory, NewsFilter, NewsItem, SendToN8nPayload } from './types/news'
 import type { AuthUser } from './types/auth'
 import { api, authStorage, getApiErrorMessage } from './services/api'
 import { DEFAULT_VISIBLE_CATEGORIES } from './constants/categories'
@@ -87,6 +88,7 @@ function App() {
   const [filter] = useState<NewsFilter>('all')
   const [relatedNewsTarget, setRelatedNewsTarget] = useState<NewsItem | null>(null)
   const [sendToN8nTarget, setSendToN8nTarget] = useState<NewsItem | null>(null)
+  const [isBatchToneModalOpen, setIsBatchToneModalOpen] = useState(false)
   const [selectedNewsIds, setSelectedNewsIds] = useState<Set<string>>(new Set())
   const [visibleCategories, setVisibleCategories] = useState<Set<NewsCategory>>(() => getStoredVisibleCategories())
   const [categoryOrder, setCategoryOrder] = useState<NewsCategory[]>(CATEGORIES)
@@ -189,16 +191,18 @@ function App() {
   }, [])
 
   const sendMultipleToN8nMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
+    mutationFn: async ({ ids, tone, editorialContext }: { ids: string[]; tone: EditorialTone; editorialContext?: string }) => {
       return api.generateTopicProposals({
         newsIds: ids,
-        tone: 'informativo',
+        tone,
+        editorialContext,
         requestedProposals: 5,
       })
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       setErrorMessage(null)
-      setMessage(`${selectedNewsIds.size} articulos enviados a n8n en un solo lote.`)
+      setIsBatchToneModalOpen(false)
+      setMessage(`${variables.ids.length} articulos enviados a n8n en un solo lote.`)
       setSelectedNewsIds(new Set())
       queryClient.invalidateQueries({ queryKey: ['news'] })
     },
@@ -279,6 +283,7 @@ function App() {
     authStorage.clearToken()
     setCurrentUser(null)
     setSelectedNewsIds(new Set())
+    setIsBatchToneModalOpen(false)
     setRelatedNewsTarget(null)
     setSendToN8nTarget(null)
     setMessage(null)
@@ -404,6 +409,25 @@ function App() {
         }}
       />
 
+      {isBatchToneModalOpen ? (
+        <GenerateTopicProposalsModal
+          selectedCount={selectedNewsIds.size}
+          isSubmitting={sendMultipleToN8nMutation.isPending}
+          onCancel={() => {
+            if (!sendMultipleToN8nMutation.isPending) {
+              setIsBatchToneModalOpen(false)
+            }
+          }}
+          onConfirm={({ tone, editorialContext }) => {
+            void sendMultipleToN8nMutation.mutateAsync({
+              ids: Array.from(selectedNewsIds),
+              tone,
+              editorialContext,
+            })
+          }}
+        />
+      ) : null}
+
       <div className="pointer-events-none fixed bottom-4 left-1/2 z-20 w-full max-w-xl -translate-x-1/2 px-4 flex flex-col gap-2">
         {selectedNewsIds.size > 0 ? (
           <div className="pointer-events-auto rounded-xl border border-cyan-500/40 bg-zinc-900/95 p-3 shadow-xl backdrop-blur flex items-center justify-between gap-4">
@@ -414,7 +438,7 @@ function App() {
               {currentUser.isAdmin || currentUser.canSendToN8n ? (
                 <button
                   type="button"
-                  onClick={() => sendMultipleToN8nMutation.mutate(Array.from(selectedNewsIds))}
+                  onClick={() => setIsBatchToneModalOpen(true)}
                   disabled={sendMultipleToN8nMutation.isPending}
                   className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-500 disabled:opacity-60"
                 >

@@ -24,6 +24,16 @@ export type NewsStatus = 'new' | 'selected' | 'discarded' | 'sent_to_n8n'
 
 export type NewsFilter = 'score70' | 'all' | 'new' | 'selected' | 'discarded'
 
+export const EDITORIAL_TONES = ['informative', 'positive', 'critical'] as const
+
+export type EditorialTone = (typeof EDITORIAL_TONES)[number]
+
+export const EDITORIAL_TONE_LABELS: Record<EditorialTone, string> = {
+  informative: 'Informativo',
+  positive: 'Positiva',
+  critical: 'Critica',
+}
+
 export interface NewsItem {
   id: string
   sourceName: string
@@ -50,6 +60,7 @@ export interface NewsStatusPayload {
 }
 
 export interface SendToN8nPayload {
+  tone?: EditorialTone
   editorialRating: number
   editorialContext?: string
 }

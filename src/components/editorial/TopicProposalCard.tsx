@@ -1,5 +1,6 @@
 import { ExternalLink, FileText, Share2 } from 'lucide-react'
 import type { EditorialTopicProposal } from '../../types/editorial'
+import { EDITORIAL_TONE_LABELS, type EditorialTone } from '../../types/news'
 
 interface TopicProposalCardProps {
   proposal: EditorialTopicProposal
@@ -53,6 +54,7 @@ export function TopicProposalCard({ proposal }: TopicProposalCardProps) {
     typeof proposal.proposal.contenido === 'string' ? proposal.proposal.contenido : undefined,
   )
   const primarySource = proposal.sources.find((source) => source.url)
+  const toneLabel = EDITORIAL_TONE_LABELS[proposal.tone as EditorialTone] ?? proposal.tone
 
   return (
     <article className="rounded-lg border border-zinc-700 bg-zinc-900 p-4 shadow-lg shadow-black/20">
@@ -68,7 +70,7 @@ export function TopicProposalCard({ proposal }: TopicProposalCardProps) {
             {proposal.status}
           </span>
           <span className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-cyan-200">
-            {proposal.tone}
+            {toneLabel}
           </span>
         </div>
       </div>

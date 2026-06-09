@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { RefreshCw, Search } from 'lucide-react'
+import { EDITORIAL_TONE_LABELS, type EditorialTone } from '../../types/news'
 import type { EditorialTopicProposal } from '../../types/editorial'
 import { getApiErrorMessage } from '../../services/api'
 import {
@@ -49,6 +50,13 @@ export function EditorialWorkspace() {
     ? getApiErrorMessage(sendTopicProposalMutation.error)
     : undefined
   const selectedTopic = topicsQuery.data?.find((topic) => topic.id === activeTopicId)
+  const renderTone = (tone?: string) => {
+    if (!tone) {
+      return 'Sin tono definido'
+    }
+
+    return EDITORIAL_TONE_LABELS[tone as EditorialTone] ?? tone
+  }
 
   return (
     <main className="h-full overflow-y-auto px-4 pb-6 pt-36 sm:px-6">
@@ -153,7 +161,7 @@ export function EditorialWorkspace() {
                 <p className="text-xs font-medium uppercase text-zinc-500">Tema seleccionado</p>
                 <h2 className="mt-1 text-lg font-semibold text-zinc-100">{selectedTopic.theme}</h2>
                 <p className="mt-1 text-sm text-zinc-400">
-                  {selectedTopic.category} · {selectedTopic.tone}
+                  {selectedTopic.category} · {renderTone(selectedTopic.tone)}
                 </p>
               </div>
             ) : null}

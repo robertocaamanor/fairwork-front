@@ -13,7 +13,7 @@ import { GenerateTopicProposalsModal } from './components/editorial/GenerateTopi
 import { NEWS_CATEGORIES } from './types/news'
 import type { EditorialTone, NewsCategory, NewsFilter, NewsItem, SendToN8nPayload } from './types/news'
 import type { AuthUser } from './types/auth'
-import { api, authStorage, getApiErrorMessage } from './services/api'
+import { AUTH_SESSION_EXPIRED_EVENT, api, authStorage, getApiErrorMessage, isUnauthorizedError } from './services/api'
 import { DEFAULT_VISIBLE_CATEGORIES } from './constants/categories'
 
 const CATEGORIES: NewsCategory[] = [...NEWS_CATEGORIES]
@@ -99,9 +99,89 @@ function App() {
   const [debouncedSearchByCategory, setDebouncedSearchByCategory] = useState<Record<NewsCategory, string>>(
     buildCategoryRecord(() => ''),
   )
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser())
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => (
+    authStorage.getToken() ? getStoredUser() : null
+  ))
+  const [isCheckingSession, setIsCheckingSession] = useState(() => authStorage.getToken() !== null)
   const [message, setMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const clearAuthenticatedState = useCallback(() => {
+    setCurrentUser(null)
+    setSelectedNewsIds(new Set())
+    setIsBatchToneModalOpen(false)
+    setRelatedNewsTarget(null)
+    setSendToN8nTarget(null)
+    setMessage(null)
+    setErrorMessage(null)
+    queryClient.clear()
+  }, [queryClient])
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearAuthenticatedState()
+      navigate('/login', { replace: true })
+    }
+
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [clearAuthenticatedState, navigate])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const validateSession = async () => {
+      const token = authStorage.getToken()
+
+      if (!token) {
+        clearAuthenticatedState()
+        setIsCheckingSession(false)
+        return
+      }
+
+      try {
+        const user = await api.getCurrentUser()
+        if (!isMounted) return
+        setCurrentUser(user)
+        setErrorMessage(null)
+      } catch (error) {
+        if (!isMounted) return
+        authStorage.clearToken()
+        clearAuthenticatedState()
+
+        if (!isUnauthorizedError(error)) {
+          setErrorMessage(getApiErrorMessage(error))
+        }
+      } finally {
+        if (isMounted) {
+          setIsCheckingSession(false)
+        }
+      }
+    }
+
+    void validateSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [clearAuthenticatedState])
+
+  useEffect(() => {
+    if (isCheckingSession) {
+      return
+    }
+
+    if (!currentUser) {
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true })
+      }
+      return
+    }
+
+    if (location.pathname === '/' || location.pathname === '/login') {
+      navigate('/monitor', { replace: true })
+    }
+  }, [currentUser, isCheckingSession, location.pathname, navigate])
 
   useEffect(() => {
     if (!message) return
@@ -120,7 +200,7 @@ function App() {
     queryFn: api.getLatestNewsGrouped,
     refetchInterval: 60000,
     staleTime: 30000,
-    enabled: currentUser !== null,
+    enabled: currentUser !== null && !isCheckingSession,
   })
 
   useEffect(() => {
@@ -270,6 +350,7 @@ function App() {
       setErrorMessage(null)
       setMessage(null)
       await queryClient.invalidateQueries({ queryKey: ['news'] })
+      navigate('/monitor', { replace: true })
     },
     onError: (error: unknown) => {
       authStorage.clearToken()
@@ -281,15 +362,9 @@ function App() {
 
   const handleLogout = useCallback(() => {
     authStorage.clearToken()
-    setCurrentUser(null)
-    setSelectedNewsIds(new Set())
-    setIsBatchToneModalOpen(false)
-    setRelatedNewsTarget(null)
-    setSendToN8nTarget(null)
-    setMessage(null)
-    setErrorMessage(null)
-    queryClient.clear()
-  }, [queryClient])
+    clearAuthenticatedState()
+    navigate('/login', { replace: true })
+  }, [clearAuthenticatedState, navigate])
 
   const handleColumnSearchChange = useCallback((category: NewsCategory, value: string) => {
     setSearchByCategory((previous) => ({
@@ -304,6 +379,16 @@ function App() {
       [category]: value,
     }))
   }, [])
+
+  if (isCheckingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-zinc-100">
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 px-5 py-4 text-sm text-zinc-300 shadow-xl shadow-black/20">
+          Validando sesión...
+        </div>
+      </div>
+    )
+  }
 
   if (!currentUser) {
     return (

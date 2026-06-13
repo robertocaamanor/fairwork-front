@@ -17,6 +17,7 @@ const apiClient = axios.create({
 })
 
 const AUTH_TOKEN_STORAGE_KEY = 'fairwork-token'
+export const AUTH_SESSION_EXPIRED_EVENT = 'fairwork-auth-session-expired'
 
 const getStoredToken = (): string | null => {
   if (typeof window === 'undefined') {
@@ -47,6 +48,35 @@ export const authStorage = {
   },
 }
 
+const notifySessionExpired = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT))
+}
+
+export const isUnauthorizedError = (error: unknown): boolean => {
+  return axios.isAxiosError(error) && error.response?.status === 401
+}
+
+const isLoginRequest = (error: unknown): boolean => {
+  if (!axios.isAxiosError(error)) {
+    return false
+  }
+
+  return String(error.config?.url ?? '').includes('/auth/login')
+}
+
+export const handleAuthResponseError = (error: unknown): Promise<never> => {
+  if (isUnauthorizedError(error) && !isLoginRequest(error)) {
+    authStorage.clearToken()
+    notifySessionExpired()
+  }
+
+  return Promise.reject(error)
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = authStorage.getToken()
 
@@ -56,6 +86,8 @@ apiClient.interceptors.request.use((config) => {
 
   return config
 })
+
+apiClient.interceptors.response.use((response) => response, handleAuthResponseError)
 
 interface RawNewsItem {
   id: string | number

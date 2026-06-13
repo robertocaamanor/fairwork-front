@@ -7,7 +7,7 @@ import type {
   EditorialTopicProposalStatus,
   EditorialTopicSource,
 } from '../types/editorial'
-import { authStorage } from './api'
+import { authStorage, handleAuthResponseError } from './api'
 
 const editorialClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000',
@@ -23,6 +23,8 @@ editorialClient.interceptors.request.use((config) => {
 
   return config
 })
+
+editorialClient.interceptors.response.use((response) => response, handleAuthResponseError)
 
 const normalizeReview = (payload: unknown): EditorialReview => {
   const item = (payload ?? {}) as Partial<EditorialReview>
